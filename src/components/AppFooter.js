@@ -1,11 +1,11 @@
-// This file defines and styles the NavBar element
+// This file defines and styles the Footer element
 
 import { html, css, LitElement} from "lit";
 
 const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString();
 const COMMIT_HASH = import.meta.env.VITE_COMMIT ?? 'unknown';
 
-class Footer extends LitElement {
+class AppFooter extends LitElement {
     static get tag() {
         return "app-footer";
     }
@@ -67,4 +67,4 @@ class Footer extends LitElement {
 }
 
 //declare as a callable html element
-customElements.define(Footer.tag, Footer);
+customElements.define(AppFooter.tag, AppFooter);

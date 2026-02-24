@@ -2,4 +2,4 @@
 // This simplifies the reference point to a single file reference in index.html
 
 import './components/NavBar.js';
-import './components/Footer.js';
+import './components/AppFooter.js';
