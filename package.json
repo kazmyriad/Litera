@@ -8,7 +8,7 @@
     "build:vite": "vite build",
     "preview": "vite preview --port 4173",
     "build:server": "tsc -p tsconfig.server.json",
-    "start": "node dist-server/server.ts",
+    "start": "node dist-server/server.js",
     "dev:full": "concurrently \"vite\" \"ts-node -P tsconfig.server.json server.ts\""
   },
   "keywords": [],
