@@ -2,6 +2,8 @@
 
 import express, { request, response, NextFunction } from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { getAuthParams, uploadBuffer} from './imagekit';
 
 const app = express();
@@ -27,6 +29,17 @@ app.post('/api/imagekit/upload-base64', async (req, res) => {
         res.status(500).json({ error: 'Upload failed' });
     }
 });
+
+// serve Vite build (connect to client)
+const distDir = path.join(process.cwd(), 'dist'); // Vite default outDir is "dist"
+app.use(express.static(distDir));
+
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not found' });
+  res.sendFile(path.join(distDir, 'index.html'));
+});
+
+
 
 app.listen(process.env.PORT || 3001, () => {
     console.log(`ImageKit auth server listening on ${process.env.PORT}`);

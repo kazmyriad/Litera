@@ -4,12 +4,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "powershell -NoProfile -Command \"$env:VITE_BUILD_TIME=(Get-Date).ToUniversalTime().ToString('s')+'Z'; $env:VITE_COMMIT=(git rev-parse --short HEAD).Trim(); npm run build:vite\"",
-    "build:vite": "vite build",
-    "preview": "vite preview --port 4173",
+    "build:client": "VITE_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) VITE_COMMIT=$(git rev-parse --short HEAD) vite build",
     "build:server": "tsc -p tsconfig.server.json",
-    "start": "node dist-server/server.js",
-    "dev:full": "concurrently \"vite\" \"ts-node -P tsconfig.server.json server.ts\""
+    "build": "npm run build:client && npm run build:server",
+    "preview": "vite preview --port 4173",
+    "start": "node dist-server/server.js"
   },
   "keywords": [],
   "author": "",
