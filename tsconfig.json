@@ -1,0 +1,16 @@
+// this config is read by vite (client-side)
+
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts", "vite.config.*"],
+  "exclude": ["dist", "server.ts", "imagekit.ts", "dist-server", "node_modules"]
+}
