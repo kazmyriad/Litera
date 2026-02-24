@@ -34,7 +34,7 @@ app.post('/api/imagekit/upload-base64', async (req, res) => {
 const distDir = path.join(process.cwd(), 'dist'); // Vite default outDir is "dist"
 app.use(express.static(distDir));
 
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not found' });
   res.sendFile(path.join(distDir, 'index.html'));
 });
