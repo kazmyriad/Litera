@@ -2,21 +2,29 @@
 
 import { html, css, LitElement} from "lit";
 
-class NavBar extends LitElement {
+const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString();
+const COMMIT_HASH = import.meta.env.VITE_COMMIT ?? 'unknown';
+
+class Footer extends LitElement {
     static get tag() {
-        return "nav-bar";
+        return "app-footer";
     }
 
     static get properties() {
         return {
+            appLogoUrlInverted: {type: String, reflect: true},
+            appUpdateDate: {type: Date, reflect: true},
             appName: {type: String, reflect: true},
-            appLogoUrl: {type: String, reflect: true},
+            appContactUrl: {type: String, reflect: true},
+
         };
     }
     constructor() {
         super();
+        this.appLogoUrlInverted = "#";
+        this.appUpdateDate = BUILD_TIME,
         this.appName = "";
-        this.appLogoUrl = "#";
+        this.appContactUrl = "#"
     }
 
     static get styles() {
@@ -42,17 +50,16 @@ class NavBar extends LitElement {
     }
     
     render() {
+        const updated = new Date(this.appUpdateDate).toLocaleString();
         return html`
             <div id="container">
                 <div id="left">
-                    <img src="${this.appLogoUrl}">
-                    <h2>${this.appName}</h2>
+                    <img src="${this.appLogoUrlInverted}">
+                    <p>${updated}</p>
+                    <p>${this.appName}</p>
                 </div>
-                <div id="rights">
-                    <a>home</a>
-                    <a>communities</a>
-                    <a>library</a>
-                    <a>profile</a>
+                <div id="right">
+                    <a href="${this.appContactUrl}">contact</a>
                 </div>
             </div>
         `;
@@ -60,4 +67,4 @@ class NavBar extends LitElement {
 }
 
 //declare as a callable html element
-customElements.define(NavBar.tag, NavBar);
+customElements.define(Footer.tag, Footer);
