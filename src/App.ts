@@ -53,13 +53,3 @@ function App () {
         console.error("Error rendering page: ", e);
     }
 }
-const root = document.getElementById('app');
-
-//route to Profile
-if (window.location.pathname === '/pages/profile') {
-    Profile;
-} else {
-    root;
-}
-
-// add navigateTo(Profile) instance here
