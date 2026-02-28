@@ -1,87 +1,98 @@
 // THIS IS WHERE WE WILL GENERATE TEST CODE FOR SERVER.ts
-const request = require("supertest");
-const app = require("../server");
+// mock external functions
+jest.mock("../imagekit", () => ({
+  __esModule: true,
+  getAuthParams: jest.fn(() => ({
+    token: "mock-token",
+    expire: 123,
+    signature: "mock-signature",
+    publicKey: "fake-public",
+    urlEndpoint: "https://fake.endpoint"
+  })),
+  uploadBuffer: jest.fn(async () => ({
+    url: "https://mock.url/upload.jpg",
+    fileId: "mock-file-id"
+  })),
+  toFile: jest.fn(async () => "mock-uploadable")
+}));
+//mock middleware
+jest.mock("fs", () => ({ 
+    createReadStream: jest.fn(() => ({ 
+        on: jest.fn(), pipe: jest.fn() 
+    })) 
+}));
 
-// test server.ts methods
+const uploadBuffer = require("../imagekit");
+const request = require("supertest");
+const app = require("../server").default;
+
+process.env.VITE_IMAGEKIT_PRIVATE_KEY = "fake-private";
+process.env.VITE_IMAGEKIT_PUBLIC_KEY = "fake-public";
+process.env.VITE_IMAGEKIT_URL_ENDPOINT = "https://fake.endpoint";
+
 // test GET imagekit
 describe("GET /api/imagekit/auth", () => {
-    // test success response
-    test("should return status code 200, expected body, & expected info", async () => {
-        const response = await request(app).get('/api/imagekit/auth');
+    test("returns auth params", async () => {
+        const res= await request(app).get('/api/imagekit/auth');
 
-        expect(response.statusCode).toBe(200); // check for status code
-        expect(response.body).toEqual({message: "Success"});
-        expect(response.body).toHaveProperty("message") // checks for specific property
-    });
-    // test error response
-    test("should return 404", async () => {
-        const response = await request(app).get("/invalidroute");
-
-        expect(response.statusCode).toBe(404);
+        expect(res.statusCode).toBe(200); 
+        expect(res.body).toEqual({ 
+            token: "mock-token", 
+            expire: 123, 
+            signature: "mock-signature", 
+            publicKey: "fake-public", 
+            urlEndpoint: "https://fake.endpoint" 
+        });
     });
 });
 
 // test POST imagekit
 describe("POST /api/imagekit/upload-base64", () => {
-    // tesst success response
-    test("should return status code 201, expected body, & expected info", async () => {
-        const response = await request(app).post('/api/imagekit/upload-base64');
-        // might need to declare basic file test case variables to test this accurately
-
-        expect(response.statusCode).toBe(201);
-        expect(response.body).toEqual({message: "Success"});
-        expect(response.body).toHaveProperty("message");
+    // test success response
+    test("returns 201", async () => {
+        const res = await request(app)
+        .post("/api/imagekit/upload-base64") 
+        .send({ base64: Buffer.from("test").toString("base64"), fileName: "test.jpg" }); 
+        
+        expect(res.statusCode).toBe(201); 
+        expect(res.body).toEqual({ url: "https://mock.url/upload.jpg", fileId: "mock-file-id" });
     });
-    
-    // test error response: Base64 required
-    test("should return 400", async () => {
-        const response = await request(app).post("/api/imagekit/upload-base64");
-        // declare test values that cause this to fail
 
-        expect(response.statusCode).toBe(400);
-    })
+    // test error response: Missing Base64
+    test("returns 400 when base64 missing", async () => {
+        const res = await request(app).post('/api/imagekit/upload-base64');
+
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({ error: "base64 is required" });
+    });
 
     // test error response: Upload Failed
     test("should return 500", async () => {
-        const response = await request(app).post("/invalidroute");
-
-        expect(response.statusCode).toBe(500);
+        uploadBuffer.mockRejectedValue(new Error("Upload failed"));
+        const res = await request(app)
+        .post("/api/imagekit/upload-base64") 
+        .send({ base64: Buffer.from("test").toString("base64"), fileName: "test.jpg" }); 
+        
+        expect(res.statusCode).toBe(500); 
+        expect(res.body).toEqual({ error: "Upload failed" });
     })
 });
 
-// test Render.com connection
-describe("GET /^\/(?!api).*/", () => {
-    // tesst success response
-    test("should return status code 200, expected body, & expected info", async () => {
-        const response = await request(app).get(/^\/(?!api).*/);
+// test non-API routes
+describe("get non-api routes", () => {
+    // test success response
+    test("returns index.html for non-api paths", async () => {
+        const res = await request(app).get("/profile");
 
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toEqual({message: "Success"});
-        expect(response.body).toHaveProperty("message");
+        expect(res.statusCode).toBe(200);
+        expect(res.headers["content-type"]).toMatch(/html/);
     });
 
     // test error response
     test("should return 404", async () => {
-        const response = await request(app).get("/invalidroute");
+        const res = await request(app).get("/api/something");
 
-        expect(response.statusCode).toBe(404);
+        expect(res.statusCode).toBe(404);
     });
-});
-
-// test port connection
-describe("GET process.env.PORT", () => {
-    test("should return status code 200 & expected body", async () => {
-        const response = await request(app).get(process.env.PORT);
-
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toEqual({message: "Success"});
-    });
-
-    // test error response
-    test("should return status code 404", async () => {
-        const response = await request(app).get("invalidroute");
-
-        expect(response.statusCode).toBe(404);
-    })
 });
 

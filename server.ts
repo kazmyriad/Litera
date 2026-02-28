@@ -39,8 +39,10 @@ app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(distDir, 'index.html'));
 });
 
-
-
-app.listen(process.env.PORT || 3001, () => {
+if (process.env.NODE_ENV !== "test") {
+  app.listen(process.env.PORT || 3001, () => {
     console.log(`ImageKit auth server listening on ${process.env.PORT}`);
-});
+  });
+}
+
+export default app;

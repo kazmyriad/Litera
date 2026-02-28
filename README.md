@@ -44,13 +44,6 @@ This method requests the client-side connection to the host server, Render.com, 
         res.sendFile(path.join(distDir, 'index.html'));
     });`
 
-#### app.listen() for establishing PORT
-This method is standard for all API connections. It establishes the PORT number that the project is running on:
-
-    `app.listen(process.env.PORT || 3001, () => {
-        console.log(`ImageKit auth server listening on ${process.env.PORT}`);
-    });`
-
 ## imagekit.ts  
 This file defines the getAuthParams() and upload fuctions for users to be able to upload images on the application to be stored in the ImageKit storage cloud.  
 
@@ -180,6 +173,7 @@ To test our code, we created files called `testserver.test.js` and `testimagekit
 
     `npm install --save-dev ts-jest @types/jest
     npx ts-jest config:init
+    npm install dotenv
     `
 
 Then we added the jest script dependency in `package.json` under `scripts`.

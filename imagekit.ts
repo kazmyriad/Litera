@@ -1,28 +1,28 @@
 //this file handles the connection between ImageKit on the Server-Side (RENDER)
 
 import ImageKit, { toFile, type Uploadable }from '@imagekit/nodejs';
+import dotenv from "dotenv"; 
+dotenv.config();
 
-const PRIVATE_KEY = process.env.VITE_IMAGEKIT_PRIVATE_KEY;
-const PUBLIC_KEY = process.env.VITE_IMAGEKIT_PUBLIC_KEY;
-const URL_ENDPOINT = process.env.VITE_IMAGEKIT_URL_ENDPOINT;
-
-if (!PRIVATE_KEY) throw new Error('Missing IMAGEKIT_PRIVATE_KEY');
-if (!URL_ENDPOINT) throw new Error('Missing IMAGEKIT_URL_ENDPOINT');
-if (!PUBLIC_KEY) throw new Error('Missing IMAGEKIT_PUBLIC_KEY');
-
-// Initialize the Node SDK client (server-side only)
-const ik = new ImageKit({
-  privateKey: PRIVATE_KEY,
-});
+function ensureEnv() {
+  if (!process.env.VITE_IMAGEKIT_PRIVATE_KEY) throw new Error("Missing IMAGEKIT_PRIVATE_KEY");
+  if (!process.env.VITE_IMAGEKIT_PUBLIC_KEY) throw new Error("Missing IMAGEKIT_PUBLIC_KEY");
+  if (!process.env.VITE_IMAGEKIT_URL_ENDPOINT) throw new Error("Missing IMAGEKIT_URL_ENDPOINT");
+}
 
 export function getAuthParams() {
+  ensureEnv();
+  // initialize the NODE SDK client (server-side only)
+  const ik = new ImageKit({
+    privateKey: process.env.VITE_IMAGEKIT_PRIVATE_KEY,
+  });
   const { token, expire, signature } = ik.helper.getAuthenticationParameters();
   return {
     token,
     expire,
     signature,
-    publicKey: PUBLIC_KEY!,
-    urlEndpoint: URL_ENDPOINT!,
+    publicKey: process.env.VITE_IMAGEKIT_PUBLIC_KEY!,
+    urlEndpoint: process.env.VITE_IMAGEKIT_URL_ENDPOINT!,
   };
 }
 
@@ -35,6 +35,11 @@ export async function uploadBuffer(
     useUniqueFileName?: boolean;
   }
 ) {
+  ensureEnv();
+  const ik = new ImageKit({
+    privateKey: process.env.VITE_IMAGEKIT_PRIVATE_KEY,
+  });
+
   const uploadable: Uploadable = await toFile(
     file,
     options?.fileName ?? `upload-${Date.now()}`
@@ -71,6 +76,11 @@ export async function uploadFilePath(
     useUniqueFileName?: boolean;
   }
 ) {
+  ensureEnv();
+  const ik = new ImageKit({
+    privateKey: process.env.VITE_IMAGEKIT_PRIVATE_KEY,
+  });
+
   const resp = await ik.files.upload({
     file: await import('fs').then((m) => m.createReadStream(pathOnDisk)),
     fileName: options?.fileName ?? `upload-${Date.now()}`,
@@ -103,6 +113,10 @@ export function buildImageUrl(
     quality?: number;
   }
 ) {
+  ensureEnv();
+  const ik = new ImageKit({
+    privateKey: process.env.VITE_IMAGEKIT_PRIVATE_KEY,
+  });
   const tr: any[] = [];
   if (transformation?.width) tr.push({ width: transformation.width });
   if (transformation?.height) tr.push({ height: transformation.height });
@@ -112,7 +126,7 @@ export function buildImageUrl(
   if (typeof transformation?.quality === 'number') tr.push({ quality: transformation.quality });
 
   const url = ik.helper.buildSrc({
-    urlEndpoint: URL_ENDPOINT!,
+    urlEndpoint: process.env.VITE_IMAGEKIT_URL_ENDPOINT!,
     src: path.startsWith('http') ? path : `/${path.replace(/^\//, '')}`,
     transformation: tr.length ? tr : undefined,
   });
