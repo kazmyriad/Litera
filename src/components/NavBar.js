@@ -11,12 +11,14 @@ class NavBar extends LitElement {
         return {
             appName: {type: String, reflect: true},
             appLogoUrl: {type: String, reflect: true},
+            activePath: {type: String},
         };
     }
     constructor() {
         super();
         this.appName = "";
         this.appLogoUrl = "#";
+        this.activePath = "/";
     }
 
     static get styles() {
@@ -43,6 +45,18 @@ class NavBar extends LitElement {
             }
         `;
     }
+
+    _onNavigate(path) {
+        this.dispatchEvent(new CustomEvent('app:navigate', {
+            detail: {path},
+            bubbles: true,
+            composed: true,
+        }));
+    }
+
+    _isActive(path) {
+        return this.activePath === path? 'active' : '';
+    }
     
     render() {
         return html`
@@ -52,10 +66,18 @@ class NavBar extends LitElement {
                     <h2>${this.appName}</h2>
                 </div>
                 <div id="rights">
-                    <a>home</a>
-                    <a>communities</a>
-                    <a>library</a>
-                    <button id="navToProfile">profile</button>
+                    <a class="${this._isActive('/')}" @click=${(e) => {
+                        e.preventDefault(); this._onNavigate('/');}}>
+                        home</a>
+                    <a class="${this._isActive('/communities')}" @click=${(e) => {
+                        e.preventDefault(); this._onNavigate('/communities');}}>
+                        communities</a>
+                    <a class="${this._isActive('/library')}" @click=${(e) => {
+                        e.preventDefault(); this._onNavigate('/library');}}>
+                        library</a>
+                    <a class="${this._isActive('/profile')}" @click=${(e) => {
+                        e.preventDefault(); this._onNavigate('/profile');}}>
+                        profile</a>
                 </div>
             </div>
         `;
