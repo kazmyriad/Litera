@@ -179,8 +179,14 @@ To test our code, we created files called `testserver.test.js` and `testimagekit
 Then we added the jest script dependency in `package.json` under `scripts`.
 
 ## How to Run TestHarness
-Describe here  
+To run the tests in the `testharness` folder, type the following into CMD/terminal:
 
-example code:  
+    `npm test`
 
-    `Include example test here`
+# Team Contribution
+| Team_Member_ID | Member_Name | Contribution |
+| -------------- | ----------- | ------------ |
+| #saj5610       | Karis Jones | n/a |
+| #hnk5111       | Hannah Kresefski | n/a |
+| #amf7248       | Alyssa Foran | n/a |
+| #sfk5879       | Skyler Koba | Created & Wrote README.md, created testharness folder and test files |
