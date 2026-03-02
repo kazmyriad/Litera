@@ -22,7 +22,7 @@ jest.mock("fs", () => ({
     })) 
 }));
 
-const uploadBuffer = require("../imagekit");
+const imagekit = require("../imagekit");
 const request = require("supertest");
 const app = require("../server").default;
 
@@ -68,7 +68,7 @@ describe("POST /api/imagekit/upload-base64", () => {
 
     // test error response: Upload Failed
     test("should return 500", async () => {
-        uploadBuffer.mockRejectedValue(new Error("Upload failed"));
+        imagekit.uploadBuffer.mockRejectedValue(new Error("Upload failed"));
         const res = await request(app)
         .post("/api/imagekit/upload-base64") 
         .send({ base64: Buffer.from("test").toString("base64"), fileName: "test.jpg" }); 
