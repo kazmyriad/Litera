@@ -25,7 +25,7 @@ jest.mock("@imagekit/nodejs", () => {
     },
   }));
   return {
-    _esModule: true,
+    __esModule: true,
     default: ImageKitMock,
     toFile: jest.fn(async () => "mock-uploadable"),
   };
@@ -42,7 +42,7 @@ process.env.VITE_IMAGEKIT_PRIVATE_KEY = "fake-private";
 process.env.VITE_IMAGEKIT_PUBLIC_KEY = "fake-public";
 process.env.VITE_IMAGEKIT_URL_ENDPOINT = "https://fake.endpoint";
 
-const { getAuthParams, uploadBuffer, buildImageUrl, uploadFilePath } = import ("../imagekit");
+const { getAuthParams, uploadBuffer, buildImageUrl, uploadFilePath } = require("../imagekit");
 
 // test getAuthParams
 describe("getAuthParams", () => {
