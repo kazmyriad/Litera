@@ -187,6 +187,6 @@ To run the tests in the `testharness` folder, type the following into CMD/termin
 | Team_Member_ID | Member_Name | Contribution |
 | -------------- | ----------- | ------------ |
 | #saj5610       | Karis Jones | n/a |
-| #hnk5111       | Hannah Kresefski | worked on project detailed design |
+| #hnk5111       | Hannah Kresefski | worked on project detailed design & code debugging|
 | #amf7248       | Alyssa Foran | n/a |
 | #sfk5879       | Skyler Koba | Created & Wrote README.md, created testharness folder and test files |

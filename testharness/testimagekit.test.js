@@ -2,7 +2,7 @@
 
 // mock imagekit
 jest.mock("@imagekit/nodejs", () => {
-  return jest.fn().mockImplementation(() => ({
+  const ImageKitMock = jest.fn().mockImplementation(() => ({
     helper: {
       getAuthenticationParameters: () => ({
         token: "mock-token",
@@ -24,21 +24,25 @@ jest.mock("@imagekit/nodejs", () => {
       }),
     },
   }));
-  toFile: jest.fn(async () => "mock-uploadable");
+  return {
+    _esModule: true,
+    default: ImageKitMock,
+    toFile: jest.fn(async () => "mock-uploadable"),
+  };
 });
 
 // mock middleware
 jest.mock("fs", () => ({ 
     createReadStream: jest.fn(() => ({ 
-        on: jest.fn(), pipe: jest.fn() 
-    })) 
+        on: jest.fn(), pipe: jest.fn() ,
+    })), 
 }));
 
 process.env.VITE_IMAGEKIT_PRIVATE_KEY = "fake-private";
 process.env.VITE_IMAGEKIT_PUBLIC_KEY = "fake-public";
 process.env.VITE_IMAGEKIT_URL_ENDPOINT = "https://fake.endpoint";
 
-const { getAuthParams, uploadBuffer, buildImageUrl, uploadFilePath } = require("../imagekit");
+const { getAuthParams, uploadBuffer, buildImageUrl, uploadFilePath } = import ("../imagekit");
 
 // test getAuthParams
 describe("getAuthParams", () => {
