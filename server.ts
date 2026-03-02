@@ -15,7 +15,8 @@ app.get('/api/imagekit/auth', (_req, res) => {
 });
 
 app.post('/api/imagekit/upload-base64', async (_req, res) => {
-    const { base64, fileName, folder } = _req.body as { base64: string; fileName?: string; folder?: string; };
+    // body can be undefined if client sends no JSON, guard against that with ||
+    const { base64, fileName, folder } = (_req.body || {}) as { base64?: string; fileName?: string; folder?: string; };
     if (!base64) return res.status(400).json({ error: 'base64 is required' });
 
     const b64 = base64.includes(',') ? base64.split(',')[1] : base64;
