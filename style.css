@@ -1,3 +1,14 @@
+:root{
+    --color-1: var(#7f553a);
+    --color-2: var(#a58a64);
+    --color-3: var(#ece0d5);
+    --color-4: var(#646d4a);
+    --color-5: var(#414833);
+    
+    --color-text-light: var(#fbfff4);
+    --color-text-dark: var(#190d0d);
+}
+
 * {
     margin: 0px;
 }
