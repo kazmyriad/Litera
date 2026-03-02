@@ -30,7 +30,7 @@ class NavBar extends LitElement {
             }
             #container {
                 display: flex;
-                background-color: var(--color-1);
+                background-color: var(--color-4);
                 align-items: center;
                 gap: 24px;
                 margin-inline: auto;
@@ -40,9 +40,31 @@ class NavBar extends LitElement {
             }
             #left {
                 display: flex;
+                justify-content: space-between;
+            }
+            #right{
+                display: flex;
+                justify-content: flex-end;
+                width: 40%;
+
+            }
+            #navLink{
+                background-color: var(--color-3);
+                padding: 1em;
+                margin-right: 1em;
+                border-radius: 50px;
+            }
+            #navLink:hover{
+                background-color: var(--color-5);
+                color: var(--color-text-light);
+                transition: 0.3s ease;
             }
             img {
                 max-width: 80px;
+            }
+            img:hover{
+                transform: rotate(360deg);
+                transition: 5s ease;
             }
         `;
     }
@@ -66,19 +88,19 @@ class NavBar extends LitElement {
                     <img src="${this.appLogoUrl}">
                     <h2>${this.appName}</h2>
                 </div>
-                <div id="rights">
-                    <a class="${this._isActive('/')}" @click=${(e) => {
+                <div id="right">
+                    <div id="navLink"><a class="${this._isActive('/')}" @click=${(e) => {
                         e.preventDefault(); this._onNavigate('/');}}>
-                        home</a>
-                    <a class="${this._isActive('/communities')}" @click=${(e) => {
+                        home</a></div>
+                    <div id="navLink"><a class="${this._isActive('/communities')}" @click=${(e) => {
                         e.preventDefault(); this._onNavigate('/communities');}}>
-                        communities</a>
-                    <a class="${this._isActive('/library')}" @click=${(e) => {
+                        communities</a></div>
+                    <div id="navLink"><a class="${this._isActive('/library')}" @click=${(e) => {
                         e.preventDefault(); this._onNavigate('/library');}}>
-                        library</a>
-                    <a class="${this._isActive('/profile')}" @click=${(e) => {
+                        library</a></div>
+                    <div id="navLink"><a class="${this._isActive('/profile')}" @click=${(e) => {
                         e.preventDefault(); this._onNavigate('/profile');}}>
-                        profile</a>
+                        profile</a></div>
                 </div>
             </div>
         `;
