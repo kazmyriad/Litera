@@ -2,6 +2,7 @@
 
 import { html, css, LitElement} from "lit";
 
+
 class NavBar extends LitElement {
     static get tag() {
         return "nav-bar";
@@ -29,7 +30,7 @@ class NavBar extends LitElement {
             }
             #container {
                 display: flex;
-                background-color: grey;
+                background-color: var(--color-1);
                 align-items: center;
                 gap: 24px;
                 margin-inline: auto;
