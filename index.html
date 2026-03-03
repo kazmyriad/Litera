@@ -11,10 +11,20 @@
 </head>
 
 <body>
-    <nav-bar
-        appName="Litera"
-        appLogoUrl="https://ik.imagekit.io/kjonesLitera/Disco.png?updatedAt=1771898369768"
-    ></nav-bar>
+    <nav>
+        <div id="container">
+            <div id="left">
+                <img src="https://ik.imagekit.io/kjonesLitera/Disco.png?updatedAt=1771898369768">
+                <h2>Litera</h2>
+            </div>
+            <div id="rights">
+                <a class="${this._isActive('/')}">home</a>
+                <a class="${this._isActive('/')}" href="/communities">communities</a>
+                <a class="${this._isActive('/')}" href="/libraries">libraries</a>
+                <a class="${this._isActive('/')}" href="/profile">profile</a>
+            </div>
+        </div>
+    </nav>
 
     <div class="load-pages">
         <script type="module" src="src/App.ts"></script>
