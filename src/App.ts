@@ -1,89 +1,73 @@
 // This file handles page navigation and connects slugs to ts pages
-import Profile from "./pages/Profile";
+import {html, LitElement, type TemplateResult} from "lit";
+import { customElement, state } from "lit/decorators.js";
+import HomePage from "./pages/Home";
+import CommunitiesPage from "./pages/Communities";
+import LibrariesPage from "./pages/Libraries";
+import ProfilePage from "./pages/Profile";
+import './components/NavBar.js';
 
-//navigate function to display different pages
-async function navigateTo(PageClass: any, params: URLSearchParams = new URLSearchParams()) {
-    const page = new PageClass(params);
-    const html = await page.getHtml();
-    const root = document.querySelector('#app');
-    if (!root) throw new Error("#app container not found");
-    root.innerHTML = html;
-    await page.afterRender();
-}
+@customElement('app-root')
+export class App extends LitElement {
+    @state() private currentPath: string = this.getPathFromHash();
 
-// create notfound view for non-existent views
-class NotFound {
-    constructor(_: URLSearchParams) {}
-    setTitle(t: string) {document.title = t}
-    async getHtml() {return `<h1>404: Not Found</h1>`;}
-    async afterRender() {}
-}
-
-// connect ts files to their slugs
-const routes: Record<string, any> = {
-    '/': NotFound, // replace w home
-    '/profile': Profile,
-    '/communities': NotFound, // replace w communities
-    '/library': NotFound, // replace w library
-}
-
-// set active tab on nav bar
-function setActiveOnNav(path: string) {
-    document.querySelectorAll('nav-bar').forEach((el) => {
-        (el as any).activePath = path;
-    });
-}
-
-// rendering the frontend view
-export async function renderCurrentRoute() {
-    const url = new URL(window.location.href);
-    const path = url.pathname;
-    const params = url.searchParams;
-
-    // set pageclass to one of the routes, otherwise set to Not Found
-    const PageClass = routes[path] ?? NotFound;
-    await navigateTo(PageClass, params);
-
-    setActiveOnNav(path);
-}
-
-// actually replacing the current path state (the url)
-export function navigate(path: string, replace = false) {
-    const url = new URL(path, window.location.origin);
-    if (replace) {
-        window.history.replaceState({}, '', url);
-    } else {
-        window.history.pushState({}, '', url);
+    connectedCallback(): void {
+        super.connectedCallback();
+        window.addEventListener('hashchange', this.handleHashChange);
     }
-    void renderCurrentRoute();
-}
 
-export function initRouter() {
-    // handle back/forward in browser window
-    window.addEventListener('popstate', () => {
-        void renderCurrentRoute();
-    });
-    // handle nav requests from shadow DOM
-    document.addEventListener('app:navigate', (e: Event) => {
-        const ce = e as CustomEvent<{ path: string }>;
-        if (ce?.detail?.path) {
-            navigate(ce.detail.path);
+    disconnectedCallback(): void {
+        window.removeEventListener('hashchange', this.handleHashChange);
+        super.disconnectedCallback();
+    }
+
+    private getPathFromHash(): string {
+        const fullHash = window.location.hash.slice(1) || '/';
+        return fullHash.split('#')[0];
+    }
+
+    private handleHashChange = (): void => {
+        this.currentPath = this.getPathFromHash();
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+    }
+
+    private navigate = (path: string): void => {
+        if (!path.startsWith('/')) path = '/' + path;
+        if (window.location.hash !== `#${path}`) {
+            window.location.hash = path;
+        } else {
+            this.currentPath = this.getPathFromHash();
         }
-    })
+    };
 
-    /* possibly add this function for regular anchor elements on the pages
-        document.addEventListener('click', (e) => {
-            const target = e.target as Element | null;
-            const link = target?.closest?.('a[data-link]') as HTMLAnchorElement | null;
-            if (link && link.origin === window.location.origin) {
-                e.preventDefault();
-                navigate(link.getAttribute('href') || '/');
-            }
-        });
-    */
-   void renderCurrentRoute();
+    private renderPage(): TemplateResult {
+        //routing switch statement by removing hash
+        const basePath = this.currentPath.split('#')[0] || '/';
+        switch (true) {
+            case basePath === '/':
+                return HomePage({currentPath: this.currentPath});
+            case basePath.startsWith('/communities'):
+                return CommunitiesPage({currentPath: this.currentPath});
+            case basePath.startsWith('/libraries'):
+                return LibrariesPage({currentPath: this.currentPath});
+            case basePath.startsWith('/profile'):
+                return ProfilePage({currentPath: this.currentPath});
+            default: 
+                return HomePage({currentPath: this.currentPath});
+        }
+    };
+    
+    render(): TemplateResult {
+        return html`
+            <div class="container">
+                <nav-bar .currentPath=${this.currentPath} .onNavigate=${this.navigate}></nav-bar>
+                <main class="content">
+                    ${this.renderPage()}
+                </main>
+                
+            </div>
+            <app-footer></app-footer>
+        `;
+    }
+    
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    initRouter();
-});

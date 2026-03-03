@@ -1,25 +1,59 @@
 // This file defines and styles the NavBar element
+import { html, css, LitElement } from "lit";
 
-import { html, css, LitElement} from "lit";
+const NAV_LINKS = [
+    {name: 'home', path: '/'},
+    {name: 'communities', path: '/communities'},
+    {name: 'libraries', path: '/libraries'},
+    {name: 'profile', path: '/profile'},
+];
 
 
 class NavBar extends LitElement {
+
     static get tag() {
         return "nav-bar";
     }
 
     static get properties() {
         return {
-            appName: {type: String, reflect: true},
-            appLogoUrl: {type: String, reflect: true},
-            activePath: {type: String},
+            currentPath: { type: String },
+            onNavigate: { attribute: false},
+            user: { attribute: false}
         };
     }
+
     constructor() {
         super();
-        this.appName = "";
-        this.appLogoUrl = "#";
-        this.activePath = "/";
+        this.currentPath = "/";
+        this.onNavigate = (path) => {
+            window.location.hash = path;
+        };
+        this.user = null;
+    }
+
+    _base(path) {
+        if (!path) return '/';
+        return path.split('#')[0] || '/';
+    }
+
+    _isActive(path) {
+        const current = this._base(this.currentPath);
+        return path === '/' ? current === '/' : current.startsWith(path);
+    }
+
+    _go(path) {
+        if (typeof this.onNavigate === 'function') {
+            this.onNavigate(path);
+        }
+
+        this.dispatchEvent(
+            new CustomEvent('navigate', {
+                detail: { path },
+                bubbles: true,
+                composed: true,
+            })
+        );
     }
 
     static get styles() {
@@ -28,7 +62,7 @@ class NavBar extends LitElement {
                 display: block;
                 width: 100%;
             }
-            #container {
+            nav#container {
                 display: flex;
                 background-color: var(--color-4);
                 align-items: center;
@@ -69,41 +103,29 @@ class NavBar extends LitElement {
         `;
     }
 
-    _onNavigate(path) {
-        this.dispatchEvent(new CustomEvent('app:navigate', {
-            detail: {path},
-            bubbles: true,
-            composed: true,
-        }));
-    }
-
-    _isActive(path) {
-        return this.activePath === path? 'active' : '';
-    }
-    
     render() {
-        return html`
-            <div id="container">
+        return html `
+            <nav id="container">
                 <div id="left">
-                    <img src="${this.appLogoUrl}">
-                    <h2>${this.appName}</h2>
+                    <img src="https://ik.imagekit.io/kjonesLitera/Disco.png?updatedAt=1771898369768">
+                    <h2>Litera</h2>
                 </div>
                 <div id="right">
-                    <div id="navLink"><a class="${this._isActive('/')}" @click=${(e) => {
-                        e.preventDefault(); this._onNavigate('/');}}>
-                        home</a></div>
-                    <div id="navLink"><a class="${this._isActive('/communities')}" @click=${(e) => {
-                        e.preventDefault(); this._onNavigate('/communities');}}>
-                        communities</a></div>
-                    <div id="navLink"><a class="${this._isActive('/library')}" @click=${(e) => {
-                        e.preventDefault(); this._onNavigate('/library');}}>
-                        library</a></div>
-                    <div id="navLink"><a class="${this._isActive('/profile')}" @click=${(e) => {
-                        e.preventDefault(); this._onNavigate('/profile');}}>
-                        profile</a></div>
+                    ${NAV_LINKS.map(
+                        (link) =>
+                        html`
+                            <button
+                                class=${this._isActive(link.path) ? 'active' : ''}
+                                @click=${() => this._go(link.path)}
+                                aria-current=${this._isActive(link.path) ? 'page' : 'false'}
+                            >
+                                ${link.name}
+                            </button>
+                        `
+                    )}
                 </div>
-            </div>
-        `;
+            </nav>
+        `
     }
 }
 
