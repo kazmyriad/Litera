@@ -8,6 +8,7 @@ const NAV_LINKS = [
     {name: 'profile', path: '/profile'},
 ];
 
+
 class NavBar extends LitElement {
 
     static get tag() {
@@ -63,7 +64,7 @@ class NavBar extends LitElement {
             }
             nav#container {
                 display: flex;
-                background-color: grey;
+                background-color: var(--color-4);
                 align-items: center;
                 gap: 24px;
                 margin-inline: auto;
@@ -73,9 +74,31 @@ class NavBar extends LitElement {
             }
             #left {
                 display: flex;
+                justify-content: space-between;
+            }
+            #right{
+                display: flex;
+                justify-content: flex-end;
+                width: 40%;
+
+            }
+            #navLink{
+                background-color: var(--color-3);
+                padding: 1em;
+                margin-right: 1em;
+                border-radius: 50px;
+            }
+            #navLink:hover{
+                background-color: var(--color-5);
+                color: var(--color-text-light);
+                transition: 0.3s ease;
             }
             img {
                 max-width: 80px;
+            }
+            img:hover{
+                transform: rotate(360deg);
+                transition: 5s ease;
             }
         `;
     }
