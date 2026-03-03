@@ -9,8 +9,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "vite.config.*"],
+  "include": ["src/**/*.ts", "vite.config.*", "src/components/NavBar.js"],
   "exclude": ["dist", "server.ts", "imagekit.ts", "dist-server", "node_modules"]
 }
