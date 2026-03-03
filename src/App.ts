@@ -64,7 +64,9 @@ export class App extends LitElement {
                 <main class="content">
                     ${this.renderPage()}
                 </main>
+                
             </div>
+            <app-footer></app-footer>
         `;
     }
     

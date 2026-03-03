@@ -14,16 +14,13 @@ class AppFooter extends LitElement {
         return {
             appLogoUrlInverted: {type: String, reflect: true},
             appUpdateDate: {type: Date, reflect: true},
-            appName: {type: String, reflect: true},
             appContactUrl: {type: String, reflect: true},
-
         };
     }
     constructor() {
         super();
         this.appLogoUrlInverted = "#";
         this.appUpdateDate = BUILD_TIME,
-        this.appName = "";
         this.appContactUrl = "#"
     }
 
@@ -52,16 +49,16 @@ class AppFooter extends LitElement {
     render() {
         const updated = new Date(this.appUpdateDate).toLocaleString();
         return html`
-            <div id="container">
+            <footer id="container">
                 <div id="left">
                     <img src="${this.appLogoUrlInverted}">
                     <p>${updated}</p>
-                    <p>${this.appName}</p>
+                    <p>Litera</p>
                 </div>
                 <div id="right">
                     <a href="${this.appContactUrl}">contact</a>
                 </div>
-            </div>
+            </footer>
         `;
     }
 }
