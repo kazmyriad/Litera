@@ -11,3 +11,4 @@ import './pages/Profile.ts';
 import './pages/Communities.ts';
 import './pages/Libraries.ts';
 import './pages/Login.ts';
+import './pages/ProfileEdit.ts';
