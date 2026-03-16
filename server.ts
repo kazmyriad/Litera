@@ -5,10 +5,44 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getAuthParams, uploadBuffer} from './imagekit';
+import mysql from 'mysql2/promise';
 
 const app = express();
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN ?? '*', credentials: true}));
 app.use(express.json({ limit: '10mb' }));
+
+// pool
+const pool = mysql.createPool({
+  host: process.env.DB_HOST ?? 'localhost',
+  port: Number(process.env.DB_PORT) || 3306,
+  user: process.env.DB_USER ?? 'root',
+  password: process.env.DB_PASS ?? 'CrimsonCityWalls44!',
+  database: process.env.DB_NAME ?? 'litera',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
+// helper
+async function getUserById(id: number) {
+  const [rows] = await pool.query('SELECT id, username, firstname, lastname, email FROM users WHERE id = ?', [id]);
+  return Array.isArray(rows) && rows.length ? rows[0] : null;
+}
+
+// API endpoint
+app.get('/api/users/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Invalid user id' });
+
+  try {
+    const user = await getUserById(id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (e) {
+    console.error('user fetch error', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 app.get('/api/imagekit/auth', (_req, res) => {
     res.json(getAuthParams());
@@ -41,8 +75,8 @@ app.get(/^\/(?!api).*/, (req, res) => {
 });
 
 if (process.env.NODE_ENV !== "test") {
-  app.listen(process.env.PORT || 3001, () => {
-    console.log(`ImageKit auth server listening on ${process.env.PORT}`);
+  app.listen(process.env.PORT || 3002, () => {
+    console.log(`ImageKit auth server listening on ${process.env.PORT || 3002}`);
   });
 }
 
