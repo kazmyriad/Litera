@@ -2,14 +2,14 @@
 // ---- also where we would likely require having logged in + fetched specific user data
 import { html, css, type TemplateResult } from "lit";
 
-interface ProfileProps {
+interface ProfileEditProps {
     currentPath?: string;
 }
 
 //functions
 
 
-export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): TemplateResult => {
+export const ProfileEditPage = ({ currentPath = '/profile' }: ProfileEditProps): TemplateResult => {
     css`
         div {
             display: block;
@@ -26,4 +26,4 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
     `;
 };
 
-export default ProfilePage;
+export default ProfileEditPage;
