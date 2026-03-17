@@ -32,7 +32,8 @@ class AppFooter extends LitElement {
             }
             #container {
                 display: flex;
-                background-color: grey;
+                background-color: var(--color-5);
+                color: var(--color-text-light);
                 align-items: center;
                 gap: 24px;
                 margin-inline: auto;
