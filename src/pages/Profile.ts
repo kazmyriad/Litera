@@ -3,6 +3,7 @@
 import { html, css, type TemplateResult } from "lit";
 import { until } from 'lit/directives/until.js';
 import  {fetchUserById} from '../Services';
+import { StyleInfo } from "lit/directives/style-map.js";
 
 interface ProfileProps {
     currentPath?: string;
@@ -18,7 +19,7 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
             const fullName = user.full_name ?? `${user.firstname ?? ''} ${user.lastname ?? ''}`.trim();
             return html`
                 <div class="profile-names">
-                    <h4>${user.username ?? 'Unknown'}</h4>
+                    <h4>@${user.username ?? 'Unknown'}</h4>
                     <h5>${fullName || 'No name available'}</h5>
                 </div>
             `;
@@ -29,24 +30,25 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
     const styles = css`
         :host{
             display: block;
-            background-color: #ECE0D5;
+            background-color: var(--color-3);
         }
         #card {
             margin: 48px;
-            background-color: #f9f9f9;
+            background-color: white;
             border-radius: 8px;
             padding: 24px;
         }
         .banner {
             display: flex;
             border-bottom: 1px solid #ccc;
-            background-color: #fff;
-            padding: 24px;
+            padding-top: 16px;
+            padding-bottom: 16px;
+            gap: 16px;
         }
         img#profileImg {
             max-width: 100px;
             height: 100px;
-            border-radius: 50%;
+            border-radius: 100%;
         }
     `;
 
@@ -54,12 +56,17 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
       <style>${styles}</style>
       <button @click=${() => window.location.hash = '/'}>&larr; Back</button>
       <div id="card">
-        <h3>Test Profile Page</h3>
+        <button @click=${() => window.location.hash = '/profile/edit'}>Edit Profile</button>
         <div class="banner">
           <img id="profileImg" src="https://t3.ftcdn.net/jpg/02/22/85/16/360_F_222851624_jfoMGbJxwRi5AWGdPgXKSABMnzCQo9RN.jpg" />
           ${userTemplate}
         </div>
-        <button>test image set</button>
+        <div class="lists">
+            <h4>My Communities</h4>
+            insert widget here
+            <h4>My Favorites</h4>
+            insert widget here
+        </div>
       </div>
       <p>${currentPath}</p>
     `;

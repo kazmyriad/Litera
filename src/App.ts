@@ -52,12 +52,12 @@ export class App extends LitElement {
                 return CommunitiesPage({currentPath: this.currentPath});
             case basePath.startsWith('/libraries'):
                 return LibrariesPage({currentPath: this.currentPath});
-            case basePath.startsWith('/profile'):
-                return ProfilePage({currentPath: this.currentPath});
             case basePath.startsWith('/login'):
                 return LoginPage({currentPath: this.currentPath});
             case basePath.startsWith('/profile/edit'):
                 return ProfileEditPage({currentPath: this.currentPath});
+            case basePath.startsWith('/profile'):
+                return ProfilePage({currentPath: this.currentPath});
             default: 
                 return HomePage({currentPath: this.currentPath});
         }
