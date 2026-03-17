@@ -3,6 +3,21 @@
 import { html, css, type TemplateResult } from "lit";
 import { until } from 'lit/directives/until.js';
 import { fetchUserById, updateUserInformation, checkUniqueUsernameEmail } from '../Services';
+import '../components/AppAlert';
+
+type AlertType = 'success' | 'error' | 'info' | 'warning';
+
+function showAppAlert(message: string, type: AlertType = 'info', autoClose = true) {
+  let alertEl = document.querySelector('app-alert') as HTMLElement | null;
+  if (!alertEl) {
+    alertEl = document.createElement('app-alert');
+    document.body.appendChild(alertEl);
+  }
+
+  // @ts-ignore: we know this method exists on component
+  (alertEl as any).show(message, type, autoClose);
+  return alertEl;
+}
 
 interface ProfileEditProps {
     currentPath?: string;
@@ -38,14 +53,14 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
     const onSave = async () => {
       const errors = validateProfileInput(formData.username, formData.email);
       if (errors.length) {
-        alert(errors.join('\n'));
+        showAppAlert(errors.join('\n'), 'error', false);
         return;
       }
 
       try {
         const json = await checkUniqueUsernameEmail(formData.username, formData.email, userId);
         if (!json.unique) {
-          alert('Username or email already taken');
+          showAppAlert('Username or email already taken', 'warning', false);
           return;
         }
 
@@ -54,10 +69,13 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
           throw new Error('Update failed');
         }
 
-        alert('Profile saved');
+        const alertEl = showAppAlert('Profile saved', 'success', true);
+        alertEl.addEventListener('close', () => {
+          window.location.hash = '/profile';
+        }, { once: true });
       } catch (err) {
         console.error(err);
-        alert('Save failed: ' + ((err as Error).message || err));
+        showAppAlert('Save failed: ' + ((err as Error).message || err), 'error', false);
       }
     };
 
