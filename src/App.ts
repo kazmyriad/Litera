@@ -5,6 +5,8 @@ import HomePage from "./pages/Home";
 import CommunitiesPage from "./pages/Communities";
 import LibrariesPage from "./pages/Libraries";
 import ProfilePage from "./pages/Profile";
+import LoginPage from "./pages/Login";
+import ProfileEditPage from "./pages/ProfileEdit";
 import './components/NavBar.js';
 
 @customElement('app-root')
@@ -50,6 +52,10 @@ export class App extends LitElement {
                 return CommunitiesPage({currentPath: this.currentPath});
             case basePath.startsWith('/libraries'):
                 return LibrariesPage({currentPath: this.currentPath});
+            case basePath.startsWith('/login'):
+                return LoginPage({currentPath: this.currentPath});
+            case basePath.startsWith('/profile/edit'):
+                return ProfileEditPage({currentPath: this.currentPath});
             case basePath.startsWith('/profile'):
                 return ProfilePage({currentPath: this.currentPath});
             default: 

@@ -12,7 +12,8 @@
             "driver": "MySQL",
             "name": "Litera",
             "database": "Litera",
-            "username": "root"
+            "username": "root",
+            "password": "CrimsonCityWalls44!"
         }
     ]
 }
