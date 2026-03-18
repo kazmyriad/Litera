@@ -79,6 +79,57 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
       }
     };
 
+    const bannerTemplate = until(
+        userPromise.then(user => {
+            const userId = Number(user.id) || 1;   // important
+            formData.username = formData.username || user.username || '';
+            const fullName = user.full_name ?? `${user.firstname ?? ''} ${user.lastname ?? ''}`.trim();
+            return html`
+                <div class="profile-names">
+                    <p class="form-label">Username: </p> <input type="text" .value=${formData.username} @input=${(e: Event) => onInput('username', e)} /></label>
+                    <p class="form-label">Full Name: </p> <p style="margin:0px; font-style: italic; color: #666;">${fullName || 'No name available'}</p>
+                </div>
+            `;
+        }),
+        html`<div>Loading profile...</div>`
+    );
+
+    const personalInfoTemplate = until(
+        userPromise.then(user => {
+            userId = Number(user.id) || 1;   // important
+            formData.username = formData.username || user.username || '';
+            formData.firstname = formData.firstname || user.firstname || '';
+            formData.lastname = formData.lastname || user.lastname || '';
+            formData.email = formData.email || user.email || '';
+            formData.dob = formData.dob || (user.dob ? String(user.dob).slice(0,10) : '');
+
+              const fullName = user.full_name ?? `${user.firstname ?? ''} ${user.lastname ?? ''}`.trim();
+            //const phone = user.phone ?? '';
+            return html`
+                <div class="info">
+                    <div>
+                        <p class="form-label">First Name</p>
+                        <input type="text" .value=${formData.firstname} @input=${(e: Event) => onInput('firstname', e)} /></label>
+                    </div>
+                    <div>
+                        <p class="form-label">Last Name</p>
+                        <input type="text" .value=${formData.lastname} @input=${(e: Event) => onInput('lastname', e)} /></label>
+                    </div>
+                    <div>
+                        <p class="form-label">DOB</p>
+                        <input type="date" .value=${formData.dob} @input=${(e: Event) => onInput('dob', e)} /></label>
+                    </div>
+                    <div>
+                        <p class="form-label">Email</p>
+                        <input type="email" .value=${formData.email} @input=${(e: Event) => onInput('email', e)} /></label>
+                    </div>
+                    <!-- <p>Phone: </p> -->
+                </div>
+            `;
+        }),
+        html`<div>Loading profile...</div>`
+    );
+
     const styles = css`
         :host{
             display: block;
@@ -86,54 +137,70 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
         }
         #card {
             margin: 48px;
-            background-color: white;
             border-radius: 8px;
-            padding: 24px;
         }
-        .banner {
+        .banner, .personal-info, .lists {
             display: flex;
+            background-color: white;
             border-bottom: 1px solid #ccc;
-            padding-top: 16px;
-            padding-bottom: 16px;
-            gap: 16px;
+            border-radius: 8px;
+            padding: 16px;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+        .personal-info {
+            justify-content: space-between;
+        }
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+        p.form-label {
+            font-weight: lighter;
+                color: #666;
+            font-size: 0.8em;
+        }
+        .lists {
+            flex-direction: column;
         }
         img#profileImg {
             max-width: 100px;
             height: 100px;
             border-radius: 100%;
         }
+        #card button {
+            background: #a9bb72;
+            border: none;
+            padding: 6px 8px;
+            height: fit-content;
+            border-radius: 4px;
+        }
+        #card button:hover {
+            cursor: pointer;
+            opacity: 0.7;
+         }
     `;
 
     return html`
       <style>${styles}</style>
+      <svg xmlns="./images/Edit.svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="./images/Edit.svg"></path>
+      </svg>
       <button @click=${() => window.location.hash = '/'}>&larr; Back</button>
       <div id="card">
         <div class="banner">
           <img id="profileImg" src="https://t3.ftcdn.net/jpg/02/22/85/16/360_F_222851624_jfoMGbJxwRi5AWGdPgXKSABMnzCQo9RN.jpg" />
-          ${until(
-            userPromise.then(user => {
-              userId = Number(user.id) || 1;   // important
-              formData.username = formData.username || user.username || '';
-              formData.firstname = formData.firstname || user.firstname || '';
-              formData.lastname = formData.lastname || user.lastname || '';
-              formData.email = formData.email || user.email || '';
-              formData.dob = formData.dob || (user.dob ? String(user.dob).slice(0,10) : '');
-
-              const fullName = user.full_name ?? `${user.firstname ?? ''} ${user.lastname ?? ''}`.trim();
-              return html`
-                <div class="profile-names">
-                  <label>Username: <input type="text" .value=${formData.username} @input=${(e: Event) => onInput('username', e)} /></label>
-                  <label>First Name: <input type="text" .value=${formData.firstname} @input=${(e: Event) => onInput('firstname', e)} /></label>
-                  <label>Last Name: <input type="text" .value=${formData.lastname} @input=${(e: Event) => onInput('lastname', e)} /></label>
-                  <label>Email: <input type="email" .value=${formData.email} @input=${(e: Event) => onInput('email', e)} /></label>
-                  <label>DOB: <input type="date" .value=${formData.dob} @input=${(e: Event) => onInput('dob', e)} /></label>
-                </div>
-              `;
-            }),
-            html`<div>Loading profile...</div>`
-          )}
-           <button @click=${onSave}>Save Changes</button>
+          ${bannerTemplate}
         </div>
+
+        <div class="personal-info">
+          ${personalInfoTemplate}
+          <button @click=${() => window.location.hash = '/profile/edit'}>
+            Save Changes
+        </button>
+        </div>
+
         <div class="lists">
             <h4>My Communities</h4>
             insert widget here

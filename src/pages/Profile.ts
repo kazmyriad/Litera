@@ -6,6 +6,7 @@ import  {fetchUserById} from '../Services';
 import '../components/CommunityCard.js';
 import '../components/CommunityContainer.js';
 import { StyleInfo } from "lit/directives/style-map.js";
+import EditIcon from '../images/Edit.svg';
 
 interface ProfileProps {
     currentPath?: string;
@@ -16,13 +17,45 @@ interface ProfileProps {
 export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): TemplateResult => {
     const userPromise = fetchUserById(1); // hardcoded user id for testing, replace with actual logged in user id
 
-    const userTemplate = until(
+    const bannerTemplate = until(
         userPromise.then(user => {
             const fullName = user.full_name ?? `${user.firstname ?? ''} ${user.lastname ?? ''}`.trim();
             return html`
                 <div class="profile-names">
                     <h4>@${user.username ?? 'Unknown'}</h4>
                     <h5>${fullName || 'No name available'}</h5>
+                </div>
+            `;
+        }),
+        html`<div>Loading profile...</div>`
+    );
+
+    const personalInfoTemplate = until(
+        userPromise.then(user => {
+            const firstName = user.firstname ?? '';
+            const lastName = user.lastname ?? '';
+            const dob = user.dob ? new Date(user.dob).toLocaleDateString() : 'N/A';
+            const email = user.email ?? '';
+            //const phone = user.phone ?? '';
+            return html`
+                <div class="info">
+                    <div>
+                        <p class="form-label">First Name</p>
+                        <p>${firstName}</p>
+                    </div>
+                    <div>
+                        <p class="form-label">Last Name</p>
+                        <p>${lastName}</p>
+                    </div>
+                    <div>
+                        <p class="form-label">DOB</p>
+                        <p>${dob}</p>
+                    </div>
+                    <div>
+                        <p class="form-label">Email</p>
+                        <p>${email}</p>
+                    </div>
+                    <!-- <p>Phone: </p> -->
                 </div>
             `;
         }),
@@ -36,33 +69,70 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
         }
         #card {
             margin: 48px;
-            background-color: white;
             border-radius: 8px;
-            padding: 24px;
         }
-        .banner {
+        .banner, .personal-info, .lists {
             display: flex;
+            background-color: white;
             border-bottom: 1px solid #ccc;
-            padding-top: 16px;
-            padding-bottom: 16px;
-            gap: 16px;
+            border-radius: 8px;
+            padding: 16px;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+        .personal-info {
+            justify-content: space-between;
+        }
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+        p.form-label {
+            font-weight: lighter;
+                color: #666;
+            font-size: 0.8em;
+        }
+        .lists {
+            flex-direction: column;
         }
         img#profileImg {
             max-width: 100px;
             height: 100px;
             border-radius: 100%;
         }
+        #card button {
+            background: #a9bb72;
+            border: none;
+            padding: 6px 8px;
+            height: fit-content;
+            border-radius: 4px;
+        }
+        #card button:hover {
+            cursor: pointer;
+            opacity: 0.7;
+         }
     `;
 
     return html`
       <style>${styles}</style>
       <button @click=${() => window.location.hash = '/'}>&larr; Back</button>
+
       <div id="card">
-        <button @click=${() => window.location.hash = '/profile/edit'}>Edit Profile</button>
+        <h2>My Profile</h2>
+
         <div class="banner">
           <img id="profileImg" src="https://t3.ftcdn.net/jpg/02/22/85/16/360_F_222851624_jfoMGbJxwRi5AWGdPgXKSABMnzCQo9RN.jpg" />
-          ${userTemplate}
+          ${bannerTemplate}
         </div>
+
+        <div class="personal-info">
+          ${personalInfoTemplate}
+          <button @click=${() => window.location.hash = '/profile/edit'}>
+            <img src="${EditIcon}" alt="Edit Profile" width="16" height="16" />
+        </button>
+        </div>
+
         <div class="lists">
             <h4>My Communities</h4>
             <community-container>

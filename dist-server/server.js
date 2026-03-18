@@ -15,7 +15,8 @@ app.use(express_1.default.json({ limit: '10mb' }));
 // database pool
 // note: you must start the SQL connection first before running the server
 // note: you must restart the server before running the front end
-// type npm run build:server, then run node dist/server.js to start the server
+// type npm run build:server, then type node dist-server/server.js to start the server
+// open a separate terminal and type npm run dev to start the front end
 const pool = promise_1.default.createPool({
     host: process.env.DB_HOST ?? 'localhost',
     port: Number(process.env.DB_PORT) || 3306,
