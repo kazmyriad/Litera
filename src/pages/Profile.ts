@@ -5,7 +5,7 @@ import { until } from 'lit/directives/until.js';
 import  {fetchUserById} from '../Services';
 import '../components/CommunityCard.js';
 import '../components/CommunityContainer.js';
-import { StyleInfo } from "lit/directives/style-map.js";
+import '../components/BookCard.js';
 import EditIcon from '../images/Edit.svg';
 
 interface ProfileProps {
@@ -142,7 +142,11 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
                  presentation + testing -->
             </community-container>
             <h4>My Favorites</h4>
-            insert widget here
+            <community-container>
+                <book-card></book-card>
+                <book-card></book-card>
+                <book-card></book-card>
+            </community-container>
         </div>
       </div>
       <p>${currentPath}</p>

@@ -211,7 +211,11 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
                  presentation + testing -->
             </community-container>
             <h4>My Favorites</h4>
-            insert widget here
+            <community-container>
+                <book-card></book-card>
+                <book-card></book-card>
+                <book-card></book-card>
+            </community-container>
         </div>
        
       </div>

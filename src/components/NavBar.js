@@ -1,6 +1,7 @@
 // This file defines and styles the NavBar element
 import { html, css, LitElement } from "lit";
 import ProfileIcon from '../images/Profile.svg';
+import BookCaseIcon from '../images/BookCase.svg';
 
 const NAV_LINKS = [
     {name: 'home', path: '/'},
@@ -74,9 +75,12 @@ class NavBar extends LitElement {
                 justify-content: space-between;
                 padding: 12px 24px;
                 box-sizing: border-box;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
             #left {
                 display: flex;
+                gap: 16px;
+                align-items: center;
                 justify-content: space-between;
             }
             #right{
@@ -115,7 +119,8 @@ class NavBar extends LitElement {
         return html `
             <nav id="container">
                 <div id="left">
-                    <img src="https://ik.imagekit.io/kjonesLitera/Disco.png?updatedAt=1771898369768">
+                    <img src=${BookCaseIcon} alt="Bookcase Icon" style="width: 40px; height: 40px;">
+                    <!--<img src="https://ik.imagekit.io/kjonesLitera/Disco.png?updatedAt=1771898369768">-->
                     <h2>Litera</h2>
                 </div>
                 <div id="right">

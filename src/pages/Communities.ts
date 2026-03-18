@@ -34,7 +34,7 @@ export const CommunitiesPage = ({ currentPath = '/communities' }: ComProps): Tem
     return html`
         <style>${styles}</style>
         <div class="banner">
-            <h1 style="padding: 24px 64px;">Communities Page</h1>
+            <h1 style="padding: 24px 64px;">Communities</h1>
         </div>
 
         <div class="content">
