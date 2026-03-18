@@ -3,6 +3,8 @@
 import { html, css, type TemplateResult } from "lit";
 import { until } from 'lit/directives/until.js';
 import  {fetchUserById} from '../Services';
+import '../components/CommunityCard.js';
+import '../components/CommunityContainer.js';
 import { StyleInfo } from "lit/directives/style-map.js";
 import EditIcon from '../images/Edit.svg';
 
@@ -133,7 +135,14 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
 
         <div class="lists">
             <h4>My Communities</h4>
-            insert widget here
+            <community-container>
+                <community-card></community-card>
+                <community-card></community-card> 
+                <community-card></community-card>  
+                <!-- Ideally the insertion of community card should be in
+                 community-container, this is just so we have something for the
+                 presentation + testing -->
+            </community-container>
             <h4>My Favorites</h4>
             insert widget here
         </div>
