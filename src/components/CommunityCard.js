@@ -26,9 +26,12 @@ class CommunityCard extends LitElement {
             .container {
                 display: flex;
                 flex-direction: column;
+                background-color: #FFFFFF;
                 overflow: hidden;
                 width: 15em;
                 height: 10em;
+                border-radius: 8px;
+                box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
                 transition: ease-out .2s;
             }
 
@@ -37,15 +40,25 @@ class CommunityCard extends LitElement {
                 height: 10em;
 
                 .info-button{
-                    width: 100%;
                     background-color: var(--color-5);
                     transition: ease-in .2s;
+                }
+
+                .thumbnail img{
+                    opacity: 50%;
+                    transition: ease-in .2s;
+                }
+
+                button img{
+                    filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(251deg) brightness(112%) contrast(101%);
                 }
             }
 
             .thumbnail{
                 width:100%;
                 height: 100%;
+                background-color: #000000;
+                transition: ease-out .2s;
             }
 
             img{

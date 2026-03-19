@@ -1,4 +1,5 @@
 import { html, css, LitElement } from "lit";
+import '../components/CommunityCard.js';
 
 class CommunityContainer extends LitElement {
     static get tag() {
@@ -25,7 +26,7 @@ class CommunityContainer extends LitElement {
         }
 
         ::slotted(*){
-            margin-right: 1em;
+            padding: 1em 1em 1em 0em;
         }
         `;
     }
