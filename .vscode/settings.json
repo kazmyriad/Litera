@@ -14,6 +14,20 @@
             "database": "Litera",
             "username": "root",
             "password": "CrimsonCityWalls44!"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "litera-db-litera-db-host.k.aivencloud.com",
+            "port": 14088,
+            "driver": "MySQL",
+            "name": "litera-db",
+            "database": "defaultdb",
+            "username": "avnadmin"
         }
     ]
 }
