@@ -4,6 +4,9 @@ import './App.ts';
 // components
 import './components/NavBar.js';
 import './components/AppFooter.js';
+import './components/Hero.js';
+import './components/CommunityCard.js';
+import './components/successAnimation.js';
 
 //pages
 import './pages/Home.ts';

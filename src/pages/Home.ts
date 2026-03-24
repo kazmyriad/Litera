@@ -1,6 +1,7 @@
 //this is where we would write the frontend for Home
 import { html, css, type TemplateResult } from "lit";
 import '../components/Hero.js';
+import '../components/successAnimation.js';
 
 interface HomeProps {
     currentPath?: string;
@@ -17,6 +18,9 @@ export const HomePage = ({ currentPath = '/' }: HomeProps): TemplateResult => {
     `
     return html`
     <style>${style}</style>
+
+    <success-animation id="successAnim"></success-animation>
+
         <div class="banner">
             <title-hero></title-hero>
         </div>
@@ -34,6 +38,11 @@ export const HomePage = ({ currentPath = '/' }: HomeProps): TemplateResult => {
                     <li>Track your favorites</li>
                 </ul>
             </div>
+            <button @click=${(e: Event) => {
+                const root = (e.currentTarget as HTMLElement).getRootNode() as ShadowRoot;
+                const anim = root.querySelector("#successAnim") as any;
+                anim?.createAnimation();
+            }}>Create Animation</button>
 
         </div>
     `;
