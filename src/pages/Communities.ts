@@ -52,7 +52,7 @@ export const CommunitiesPage = ({ currentPath = '/communities' }: ComProps): Tem
 
             <div class="my-communities">
                 <h3>My Communities</h3>
-                <button @click=${() => window.location.hash = '/create-community'}>New Community</button>
+                <button @click=${() => window.location.hash = '#/create-community'}>New Community</button>
                 <community-container>
                     <community-card name="My Community 1" description="This is my first community."></community-card>
                     <community-card name="My Community 2" description="This is my second community."></community-card>

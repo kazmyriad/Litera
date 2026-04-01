@@ -57,7 +57,8 @@ export const CommunityCreationPage = ({ currentPath = '/communities/create-commu
             color: white;
         }
         button {
-            justify-self: end;
+            justify-self: flex-end;
+
         }
     `
     return html`

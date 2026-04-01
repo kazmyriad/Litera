@@ -15,6 +15,26 @@ export const HomePage = ({ currentPath = '/' }: HomeProps): TemplateResult => {
         div.content {
             margin: 48px;
         }
+        ul {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 48px;
+            padding: 0;
+
+        }
+        li {
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 24px;
+            list-style-type: none;
+        }
+        li h4 {
+            width: fill;
+        }
+        img {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+        }
     `
     return html`
     <style>${style}</style>
@@ -33,9 +53,18 @@ export const HomePage = ({ currentPath = '/' }: HomeProps): TemplateResult => {
             <div class="features">
                 <h2>Features</h2>
                 <ul>
-                    <li>Discover new books and authors</li>
-                    <li>Connect with other book lovers in real time</li>
-                    <li>Track your favorites</li>
+                    <li>
+                        <img src="https://images.pexels.com/photos/31632300/pexels-photo-31632300.jpeg">
+                        <h4>Discover new books and authors</h4>
+                    </li>
+                    <li>
+                        <img src="https://images.pexels.com/photos/31632300/pexels-photo-31632300.jpeg">
+                        <h4>Connect with other book lovers in real time</h4>
+                    </li>
+                    <li>
+                        <img src="https://images.pexels.com/photos/31632300/pexels-photo-31632300.jpeg">
+                        <h4>Track your favorites</h4>
+                    </li>
                 </ul>
             </div>
             <button @click=${(e: Event) => {
