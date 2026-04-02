@@ -24,6 +24,30 @@ class Breadcrumb extends LitElement {
 
     static get styles(){
         return css`
+        :host{
+            font-size: 1em;
+            color: var(--color-2);
+        }
+        .trail{
+            display: flex;
+        }
+        a{
+            margin: 1em 1em 0em 1em;
+            color: var(--color-2);
+            font-weight: bold;
+        }
+        a:hover{
+            color: var(--color-1);
+        }
+        .lastCrumb{
+            font-size: 1.2em;
+            margin-top: .7em;
+            color: var(--color-4);
+            text-decoration: none;
+        }
+        .lastCrumb:hover{
+            color:var(--color-5);
+        }
         `;
     }
 
@@ -31,8 +55,10 @@ class Breadcrumb extends LitElement {
         return html`
         <nav>
             <div class="trail">
-                ${this.segments.map((segment, index) => html`
-                    <p><a href="${segment}">${segment}</a></p>`)}
+                ${this.segments.slice(0, this.segments.length - 1).map((segment) => html`
+                    <a href="${segment}">${segment}</a> <p>/</p>`)}
+                ${this.segments.slice(-1).map((segment) => html`
+                    <a href="${segment}" class="lastCrumb">${segment}</a>`)}
             </div>
         </nav>
         `;
