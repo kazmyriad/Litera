@@ -6,7 +6,9 @@ import  {fetchUserById} from '../Services';
 import '../components/CommunityCard.js';
 import '../components/CommunityContainer.js';
 import '../components/BookCard.js';
+import '../components/Breadcrumb.js';
 import EditIcon from '../images/Edit.svg';
+
 
 interface ProfileProps {
     currentPath?: string;
@@ -116,9 +118,9 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
 
     return html`
       <style>${styles}</style>
+      <bread-crumb></bread-crumb>
       <div id="card">
         <h2>My Profile</h2>
-
         <div class="banner">
           <img id="profileImg" src="https://t3.ftcdn.net/jpg/02/22/85/16/360_F_222851624_jfoMGbJxwRi5AWGdPgXKSABMnzCQo9RN.jpg" />
           ${bannerTemplate}
