@@ -7,6 +7,7 @@ import '../components/CommunityCard.js';
 import '../components/CommunityContainer.js';
 import '../components/BookCard.js';
 import '../components/Breadcrumb.js';
+import '../components/ProfileTag.js';
 import EditIcon from '../images/Edit.svg';
 
 
@@ -134,6 +135,17 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
         </div>
 
         <div class="lists">
+            <h4>My Interests</h4>
+                <li style="list-style: none; display:flex; gap: 25px 5px; flex-wrap: wrap;">
+                    <profile-tag text="Book"></profile-tag>
+                    <profile-tag text="Series"></profile-tag>
+                    <profile-tag text="Author"></profile-tag>
+                    <profile-tag text="IP"></profile-tag>
+                    <profile-tag text="Reading"></profile-tag>
+                    <profile-tag text="Learning"></profile-tag>
+                    <profile-tag text="Painting"></profile-tag>
+                    <profile-tag text="Cooking"></profile-tag>
+                </li>
             <h4>My Communities</h4>
             <community-container>
                 <community-card></community-card>
