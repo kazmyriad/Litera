@@ -5,7 +5,7 @@ import { until } from 'lit/directives/until.js';
 import  {fetchUserById} from '../Services';
 import '../components/CommunityCard.js';
 import '../components/CommunityContainer.js';
-import '../components/BookCard.js';
+import '../components/BookCard.jsx';
 import '../components/Breadcrumb.js';
 import EditIcon from '../images/Edit.svg';
 

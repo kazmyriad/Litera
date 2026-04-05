@@ -130,3 +130,8 @@ class BookCard extends LitElement {
 }
 
 customElements.define(BookCard.tag, BookCard);
+
+//library management
+<button onClick={() => libraryManager.favoriteBook(book.id)}>
+  {book.favorite ? "Unfavorite" : "Favorite"}
+</button>

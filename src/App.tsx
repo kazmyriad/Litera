@@ -1,13 +1,13 @@
 // This file handles page navigation and connects slugs to ts pages
 import {html, LitElement, type TemplateResult} from "lit";
 import { customElement, state } from "lit/decorators.js";
-import HomePage from "./pages/Home";
-import CommunitiesPage from "./pages/Communities";
-import LibrariesPage from "./pages/Libraries";
-import ProfilePage from "./pages/Profile";
-import LoginPage from "./pages/Login";
-import ProfileEditPage from "./pages/ProfileEdit";
-import CommunityCreationPage from "./pages/CommunityCreation";
+import HomePage from "./pages/Home.js";
+import CommunitiesPage from "./pages/Communities.js";
+import LibrariesPage from "./pages/Libraries.js";
+import ProfilePage from "./pages/Profile.js";
+import LoginPage from "./pages/Login.js";
+import ProfileEditPage from "./pages/ProfileEdit.js";
+import CommunityCreationPage from "./pages/CommunityCreation.js";
 import './components/NavBar.js';
 import './components/AuthOverlay.js';
 
@@ -94,3 +94,64 @@ export class App extends LitElement {
     }
     
 }
+
+//library management OOP implementation: Observer
+import React, { useEffect, useMemo, useState } from "react";
+import { LibraryManager, Book } from "./Services.js";
+
+const LibraryApp = () => {
+  const libraryManager = useMemo(() => new LibraryManager(), []);
+  const [books, setBooks] = useState<Book[]>([]);
+
+  useEffect(() => {
+    const updateBooks = (updatedBooks: Book[]) => setBooks([...updatedBooks]);
+    libraryManager.subscribe(updateBooks);
+
+    return () => {
+      libraryManager.unsubscribe(updateBooks);
+    };
+  }, [libraryManager]);
+
+  return (
+    <div>
+        <h1>My Library</h1>
+
+        <button
+        onClick={() =>
+            libraryManager.addBook({
+            id: Date.now(),
+            title: "Test Book",
+            favorite: false,
+            tags: []
+            })
+        }
+        >
+        Add Book
+        </button>
+
+        {books.length === 0 ? (
+        <p>No books in library yet.</p>
+        ) : (
+        <ul>
+            {books.map((book) => (
+            <li key={book.id}>
+                <span>
+                {book.title} {book.favorite ? "★" : ""}
+                </span>
+
+                <button onClick={() => libraryManager.favoriteBook(book.id)}>
+                {book.favorite ? "Unfavorite" : "Favorite"}
+                </button>
+
+                <button onClick={() => libraryManager.removeBook(book.id)}>
+                Remove
+                </button>
+            </li>
+            ))}
+        </ul>
+        )}
+    </div>
+    );
+};
+
+export default LibraryApp;

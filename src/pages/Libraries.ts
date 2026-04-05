@@ -3,7 +3,7 @@
 import { html, css, type TemplateResult } from "lit";
 import '../components/SearchBar.js';
 import '../components/CommunityContainer.js';
-import '../components/BookCard.js';
+import '../components/BookCard.jsx';
 
 interface LibProps {
     currentPath?: string;

@@ -78,3 +78,52 @@ export async function createUser(payload: CreateUserPayload) {
   const raw = await res.text();
   return handleResponse(raw, res);
 }
+
+//Library management OOP implementation: Observer
+
+export type Book = {
+  id: number;
+  title: string;
+  favorite?: boolean;
+  tags?: string[];
+};
+
+export type LibraryObserver = (books: Book[]) => void;
+
+export class LibraryManager {
+  private books: Book[] = [];
+  private observers: LibraryObserver[] = [];
+
+  subscribe(observer: LibraryObserver) {
+    this.observers.push(observer);
+  }
+
+  unsubscribe(observer: LibraryObserver) {
+    this.observers = this.observers.filter(o => o !== observer);
+  }
+
+  private notify() {
+    this.observers.forEach(observer => observer(this.books));
+  }
+
+  getBooks() {
+    return this.books;
+  }
+
+  addBook(book: Book) {
+    this.books.push(book);
+    this.notify();
+  }
+
+  favoriteBook(bookId: number) {
+    this.books = this.books.map(book =>
+      book.id === bookId ? { ...book, favorite: !book.favorite } : book
+    );
+    this.notify();
+  }
+
+  removeBook(bookId: number) {
+    this.books = this.books.filter(book => book.id !== bookId);
+    this.notify();
+  }
+}
