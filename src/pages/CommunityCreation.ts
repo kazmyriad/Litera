@@ -1,5 +1,7 @@
 import { html, css, type TemplateResult } from 'lit';
 import '../components/PillButton.js';
+import { communityService } from '../Services.js';
+import '../components/successAnimation.js';
 import type { PillButton } from '../components/PillButton.ts';
 
 interface ComProps {
@@ -124,14 +126,52 @@ export const CommunityCreationPage = ({
     }
   `;
 
-    const handleSubmit = () => {
-    const selectedCategories = Array.from(
-        document.querySelectorAll("pill-button") as NodeListOf<PillButton>
-    )
-        .filter(pill => pill.selected)
-        .map(pill => pill.category);
+    const handleSubmit = async (e: Event) => {
+      e.preventDefault();
 
-    console.log("Selected categories:", selectedCategories);
+      try {
+        const pills = Array.from(
+            document.querySelectorAll("pill-button")
+        ) as PillButton[];
+          
+        const categories = pills
+          .filter(p => p.selected)
+          .map(p => p.category);
+
+    
+        await communityService.createCommunity({
+            owner: "mockUser", // TODO: real auth user
+            name: "New Community",
+            description: "Created from form",
+            categories,
+            visibility: "public",
+            rules: {
+              allowProfanity: false,
+              ageRestricted: false,
+              spamProtection: true,
+              allowImages: false,
+              autoBan: false
+            },
+
+            thumbnailUrl: "",
+            colorScheme: "default"
+          });
+
+          const successAnim = document.createElement("success-animation")
+
+          successAnim.addEventListener("finished", () => {
+            window.location.href = "#/communities";
+          });
+
+          document.body.appendChild(successAnim);
+          
+          await customElements.whenDefined("success-animation");
+
+          (successAnim as any).play();
+
+      } catch(e) {
+        console.error(e);
+      }
     };
 
   return html`

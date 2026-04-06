@@ -42,8 +42,8 @@ export class PillButton extends LitElement {
   render() {
     return html`
       <button
-        @click=${this.toggleMode}
         class=${this.selected ? "selected" : ""}
+        @click=${this.toggleMode}
       >
         <slot></slot>
       </button>
