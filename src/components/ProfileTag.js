@@ -3,7 +3,7 @@ import { html, css, LitElement } from "lit";
 class ProfileTag extends LitElement {
 
     static get tag() {
-        return "interest-tag"
+        return "profile-tag"
     }
 
     // Things put in here, declare a default in the constructor
@@ -20,11 +20,20 @@ class ProfileTag extends LitElement {
 
     static get styles() {
         return css`
+        p {
+            color: #ece0d5;
+            border-radius: 25px;
+            background-color: #646d4a;
+            padding: 5px 10px;
+            display: inline;
+            overflow: wrap;
+        }
         `;
     }
 
     render() {
         return html`
+        <p>${this.text}</p>
         `;
     }
 

@@ -198,7 +198,7 @@ To run the tests in the `testharness` folder, type the following into CMD/termin
 # Team Contribution
 | Team_Member_ID | Member_Name | Design_Pattern_Implemented | Classes_/_Interfaces_implementing_the_Design_Pattern |
 | -------------- | ----------- | ------------ |  ------------ |
-| #saj5610       | Karis Jones | Tags on Profile Page |  |
+| #saj5610       | Karis Jones | Tagging UI, Composite OOP | Profile.ts, ProfileTag.js, Communities.ts, CommunityCardContainer.js, CommunityCard.js |
 | #hnk5111       | Hannah Kresefski | Observer (OOP), Tabbed Navigation (UI) | LibraryManager (BookCard.jsx), LibraryObserver (Services.ts), LibraryApp (App.tsx), NavBar.js (all pages) |
-| #amf7248       | Alyssa Foran |  |  |
+| #amf7248       | Alyssa Foran | Breadcrumb UI, Card UI | Breadcrumb.js, Bookcard.js, CommunityCard.js, CommunityContainer.js |
 | #sfk5879       | Skyler Koba | Morphing Controls, Decorator | JoinButton.js (implemented on CommunityDetailPage, accessed by clicking on Community Cards), CommunityCreationPage (accessed through sub nav link on nav bar or CommunityPage button), Community.ts (for testing), Services.ts (test function), CommunitiesPage (to show new created communities)|
