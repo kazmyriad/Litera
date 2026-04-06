@@ -31,7 +31,7 @@ class BookCard extends LitElement {
             html, body{
                 height: 100%;
                 width: 100%;
-                overflow: hidden;
+                // overflow: hidden;
             }
             body{
                 background: #FFC967;
@@ -125,13 +125,15 @@ class BookCard extends LitElement {
                 <h3 class="title">${this.name}</h3>
                 <img src="${PointArrow}" alt="Info">
             </div>
+            
+            <button onClick={() => libraryManager.favoriteBook(book.id)}>
+                {book.favorite ? "Unfavorite" : "Favorite"}
+            </button>
         `;
     }
+
+    
 }
 
-customElements.define(BookCard.tag, BookCard);
 
-//library management
-<button onClick={() => libraryManager.favoriteBook(book.id)}>
-  {book.favorite ? "Unfavorite" : "Favorite"}
-</button>
+customElements.define(BookCard.tag, BookCard);
