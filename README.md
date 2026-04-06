@@ -200,5 +200,5 @@ To run the tests in the `testharness` folder, type the following into CMD/termin
 | -------------- | ----------- | ------------ |  ------------ |
 | #saj5610       | Karis Jones |  |  |
 | #hnk5111       | Hannah Kresefski | Observer (OOP), Tabbed Navigation (UI) | LibraryManager (BookCard.jsx), LibraryObserver (Services.ts), LibraryApp (App.tsx), NavBar.js (all pages) |
-| #amf7248       | Alyssa Foran | Breadcrumb.js, Bookcard.js, CommunityCard.js, CommunityContainer.js |
+| #amf7248       | Alyssa Foran | Breadcrumb UI, Card UI | Breadcrumb.js, Bookcard.js, CommunityCard.js, CommunityContainer.js
 | #sfk5879       | Skyler Koba |  |  |
