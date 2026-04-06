@@ -22,12 +22,26 @@ class LoginButton extends LitElement {
             border-radius: 40px;
             background-color: var(--color-4);
             color: white;
+            width: 15em;
+            height: 3em;
             border: none;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
             cursor: pointer;
+            transition: 0.3s ease;
+        }
+        button:hover {
+            background-color: var(--color-2);
+            font-size: 1em;
+            transition: 0.3s ease-in-out
         }
         .login {
             background-color: var(--color-5);
+            transition: 0.3s ease;
+        }
+        .login:hover{
+           background-color: var(--color-1);
+           font-size: 1em;
+           transition: 0.3s ease-in-out;
         }
         `;
     }

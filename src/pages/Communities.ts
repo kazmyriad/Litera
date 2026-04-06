@@ -4,6 +4,7 @@ import { html, css, type TemplateResult } from "lit";
 import '../components/SearchBar.js';
 import '../components/CommunityCard.js';
 import '../components/CommunityContainer.js';
+import '../components/Breadcrumb.js';
 
 interface ComProps {
     currentPath?: string;
@@ -32,6 +33,7 @@ export const CommunitiesPage = ({ currentPath = '/communities' }: ComProps): Tem
         }
     `
     return html`
+        <bread-crumb></bread-crumb>
         <style>${styles}</style>
         <div class="banner">
             <h1 style="padding: 24px 64px;">Communities</h1>

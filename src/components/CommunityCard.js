@@ -1,5 +1,4 @@
 import { html, css, LitElement } from "lit";
-import GoArrow from '../images/Caret-Right.svg';
 import PointArrow from '../images/Arrow.svg';  
 
 class CommunityCard extends LitElement {

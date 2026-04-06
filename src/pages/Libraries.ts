@@ -4,6 +4,7 @@ import { html, css, type TemplateResult } from "lit";
 import '../components/SearchBar.js';
 import '../components/CommunityContainer.js';
 import '../components/BookCard.jsx';
+import '../components/Breadcrumb.js';
 
 interface LibProps {
     currentPath?: string;
@@ -33,6 +34,7 @@ export const LibrariesPage = ({ currentPath = '/libraries' }: LibProps): Templat
         }
     `
     return html`
+    <bread-crumb></bread-crumb>
     <style>${styles}</style>
         <div class="banner">
             <h1 style="padding: 24px 64px;">Libraries</h1>

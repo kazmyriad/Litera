@@ -44,7 +44,6 @@ class CommunityContainer extends LitElement {
                     <community-card
                     .name=${c.name}
                     .description=${c.description}
-
                     ></community-card>
                 `
                 )}

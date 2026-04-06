@@ -205,7 +205,7 @@ class NavBar extends LitElement {
                             
                         `
                     )}
-                    <img src=${this.user?.avatarUrl || ProfileIcon} alt="User Avatar" style="width: 40px; height: 40px; border-radius: 50%;">
+                    <img src="${this.user?.avatarUrl || ProfileIcon}" alt="User Avatar" style="width: 40px; height: 40px; border-radius: 50%;">
                 </div>
             </nav>
         `

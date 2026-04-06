@@ -6,7 +6,7 @@ import './components/NavBar.js';
 import './components/AppFooter.js';
 import './components/Hero.js';
 import './components/CommunityCard.js';
-import './components/BookCard.jsx';
+import './components/BookCard.js';
 import './components/successAnimation.js';
 
 //pages
