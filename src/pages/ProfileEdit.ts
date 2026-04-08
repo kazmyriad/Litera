@@ -7,10 +7,12 @@ import '../components/CommunityCard.js';
 import '../components/CommunityContainer.js';
 import '../components/AppAlert';
 import '../components/successAnimation.js';
+import { getCurrentUser } from "../Services";
 
 type AlertType = 'success' | 'error' | 'info' | 'warning';
 
 function showSuccessAnimation() {
+
   let animEl = document.querySelector('success-animation') as any;
 
   if (!animEl) {
@@ -22,7 +24,6 @@ function showSuccessAnimation() {
 
   return animEl;
 }
-``
 
 function showAppAlert(message: string, type: AlertType = 'info', autoClose = true) {
   let alertEl = document.querySelector('app-alert') as HTMLElement | null;
@@ -43,6 +44,8 @@ interface ProfileEditProps {
 const USERNAME_REGEX = /^[A-Za-z0-9_]{1,20}$/;
 const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
+let userId = null;
+
 function validateProfileInput(username: string, email: string) {
   const errors: string[] = [];
   if (!username) errors.push('Username is required.');
@@ -53,9 +56,12 @@ function validateProfileInput(username: string, email: string) {
 }
 
 export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditProps): TemplateResult => {
-    let userId = 1;
+    const user = getCurrentUser();
+    if (!user) {
+        return html``; // App.tsx guard handles auth
+    }
 
-    const userPromise = fetchUserById(1); // hardcoded user id for testing, replace with actual logged in user id
+    const userPromise = fetchUserById(user.id); // hardcoded user id for testing, replace with actual logged in user id
 
     const formData: { username:string; firstname:string; lastname:string; dob:string; email:string } = {
       username: '', firstname: '', lastname: '', dob: '', email: ''
@@ -75,13 +81,13 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
       }
 
       try {
-        const json = await checkUniqueUsernameEmail(formData.username, formData.email, userId);
+        const json = await checkUniqueUsernameEmail(formData.username, formData.email, user.id);
         if (!json.unique) {
           showAppAlert('Username or email already taken', 'warning', false);
           return;
         }
 
-        const result = await updateUserInformation(userId, formData.username, formData.firstname, formData.lastname, formData.email, formData.dob);
+        const result = await updateUserInformation(user.id, formData.username, formData.firstname, formData.lastname, formData.email, formData.dob);
         if (!result || (result as any).success !== true) {
           throw new Error('Update failed');
         }
@@ -104,7 +110,7 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
 
     const bannerTemplate = until(
         userPromise.then(user => {
-            const userId = Number(user.id) || 1;   // important
+            const userId = Number(user.id);   // important
             formData.username = formData.username || user.username || '';
             const fullName = user.full_name ?? `${user.firstname ?? ''} ${user.lastname ?? ''}`.trim();
             return html`

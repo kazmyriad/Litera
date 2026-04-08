@@ -1,5 +1,6 @@
 import { html, css, LitElement } from "lit";
 import '../components/CommunityCard.js';
+import { communityService} from '../Services.ts';
 
 class CommunityContainer extends LitElement {
     static get tag() {
@@ -32,9 +33,21 @@ class CommunityContainer extends LitElement {
     }
 
     render(){
+        const communities = communityService.getCommunities();
+
         return html`
         <div class="card">
             <slot></slot>
+            
+            ${communities.map(
+                c => html`
+                    <community-card
+                    .name=${c.name}
+                    .description=${c.description}
+                    ></community-card>
+                `
+                )}
+
         </div>
         `;
     }

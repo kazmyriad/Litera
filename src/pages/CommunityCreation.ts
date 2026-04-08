@@ -1,177 +1,283 @@
-//this is where we would write the frontend for communities
-// ---- would also need to use sql-related variables to load in communities (likely through a map)
-import { html, css, type TemplateResult } from "lit";
-import '../components/SearchBar.js';
-import '../components/CommunityCard.js';
-import '../components/CommunityContainer.js';
+import { html, css, type TemplateResult } from 'lit';
+import '../components/PillButton.js';
+import { communityService } from '../Services.js';
+import '../components/successAnimation.js';
+import type { PillButton } from '../components/PillButton.ts';
 
 interface ComProps {
-    currentPath?: string;
+  currentPath?: string;
 }
 
-export const CommunityCreationPage = ({ currentPath = '/communities/create-community' }: ComProps): TemplateResult => {
-    const styles = css`
-        :host {
-            display: block;
-        }
-        div.banner {
-            background-color: var(--color-5);
-            margin: 24px;
-            text-align: center;
-            color: white;
-            width: fit-content;
-            justify-self: center;
-        }
-        div.content {
-            justify-items: center;
-            margin: 0px 120px;
-        }
+const CATEGORIES = [
+  'Fantasy',
+  'Sci-Fi',
+  'Romance',
+  'Non-Fiction',
+  'Fiction',
+  'Horror'
+]
 
-        div.subsec {
-            margin-bottom: 48px;
-            width: 100%;
-        }
-        div.subhead {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            margin-left: 48px;
-        }
-        .label {
-            line-height: 0px;
-        }
-        .inputs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0px 24px;
-            margin: 0px 48px;
-            padding-left: 48px;
-        }
-        .num {
-            background-color: var(--color-4);
-            width: 48px;
-            height: 48px;
-            text-align: center;
-            align-content: center;
-            border-radius: 24px;
-            color: white;
-        }
-        button {
-            justify-self: end;
-        }
-    `
-    return html`
-        <style>${styles}</style>
-        <div class="banner">
-            <h1 style="padding: 24px 64px;">Create a New Community</h1>
+export const CommunityCreationPage = ({
+  currentPath = '/communities/create-community'
+}: ComProps): TemplateResult => {
+
+  const styles = css`
+    :host {
+      display: block;
+    }
+
+    /* Banner */
+    .banner {
+      background-color: var(--color-5);
+      margin: 24px auto;
+      text-align: center;
+      color: white;
+      width: fit-content;
+      border-radius: 12px;
+    }
+
+    .banner h1 {
+      padding: 24px 64px;
+      margin: 0;
+    }
+
+    /* Main content wrapper */
+    .content {
+      justify-items: center;
+      margin: 0px 120px;
+    }
+
+    .subsec {
+      margin-bottom: 56px;
+      width: 100%;
+    }
+
+    /* Section headers */
+    .subhead {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-left: 48px;
+      margin-bottom: 16px;
+    }
+
+    .num {
+      background-color: var(--color-4);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      color: white;
+      display: grid;
+      place-items: center;
+      line-height: 0px;
+    }
+
+    /* Inputs layout */
+    .inputs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin: 0px 48px;
+      padding-left: 48px;
+    }
+
+    .label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    input, select {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.95rem;
+    }
+
+    input[type="checkbox"] {
+      margin-right: 6px;
+    }
+    /* Rules layout */
+    .rules {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+    }
+
+    /* Footer button */
+    .submit {
+      display: flex;
+      justify-content: flex-end;
+      margin: 48px 120px 96px;
+    }
+
+    button {
+      background-color: var(--color-4);
+      color: white;
+      padding: 12px 32px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+  `;
+
+    const handleSubmit = async (e: Event) => {
+      e.preventDefault();
+
+      try {
+        const pills = Array.from(
+            document.querySelectorAll("pill-button")
+        ) as PillButton[];
+          
+        const categories = pills
+          .filter(p => p.selected)
+          .map(p => p.category);
+
+    
+        await communityService.createCommunity({
+            owner: "mockUser", // TODO: real auth user
+            name: "New Community",
+            description: "Created from form",
+            categories,
+            visibility: "public",
+            rules: {
+              allowProfanity: false,
+              ageRestricted: false,
+              spamProtection: true,
+              allowImages: false,
+              autoBan: false
+            },
+
+            thumbnailUrl: "",
+            colorScheme: "default"
+          });
+
+          const successAnim = document.createElement("success-animation")
+
+          successAnim.addEventListener("finished", () => {
+            window.location.href = "#/communities";
+          });
+
+          document.body.appendChild(successAnim);
+          
+          await customElements.whenDefined("success-animation");
+
+          (successAnim as any).play();
+
+      } catch(e) {
+        console.error(e);
+      }
+    };
+
+  return html`
+    <style>${styles}</style>
+
+    <!-- Banner -->
+    <div class="banner">
+      <h1>Create a New Community</h1>
+    </div>
+
+    <div class="content">
+
+      <!-- 1. General Info -->
+      <div class="subsec">
+        <div class="subhead">
+          <div class="num"><h4>1</h4></div>
+          <h3>General Information</h3>
         </div>
 
-        <div class="content">
-            <!--1, General Information-->
-            <div class="subsec">
-                <div class="subhead">
-                    <div class="num"><h4 style="line-height: 0px">1</h4></div>
-                    <h3>General Information</h3>
-                </div>
+        <div class="inputs">
+          <div class="label">
+            <h5>Owner*</h5>
+            <input placeholder="Username" style="width: 16vw" />
+          </div>
 
-                <div class="inputs">
-                    <div class="label">
-                        <h5>Owner*</h5>
-                        <input placeholder="UserName" style="width: 16vw">
-                    </div>
-                    <div class="label">
-                        <h5>Community Name*</h5>
-                        <input placeholder="Community Name" style="width: 30vw">
-                    </div>
-                    <div class="label">
-                        <h5>Description*</h5>
-                        <input type="text" placeholder="Describe your community here" style="width: 46vw;">
-                    </div>
-                </div>
-            </div>
-            
-            <!--2, Choose Categories-->
-            <div class="subsec">
-                <div class="subhead">
-                    <div class="num"><h4 style="line-height: 0px">2</h4></div>
-                    <h3>Choose Categories</h3>
-                    <p>choose up to 5</p>
-                </div>
+          <div class="label">
+            <h5>Community Name*</h5>
+            <input placeholder="Community Name" style="width: 30vw" />
+          </div>
 
-                <div class="inputs">
-                    <div>Fantasy</div>
-                    <div>Sci-Fi</div>
-                    <div>Romance</div>
-                    <div>Non-Fiction</div>
-                    <div>Fiction</div>
-                    <div>Horror</div>
-                </div>
-            </div>
-            
-            <!--3, Choose Categories-->
-            <div class="subsec">
-                <div class="subhead">
-                    <div class="num"><h4 style="line-height: 0px">3</h4></div>
-                    <h3>Rules & Privileges</h3>
-                </div>
+          <div class="label" style="flex: 1;">
+            <h5>Description</h5>
+            <input placeholder="Describe your community" style="width: 46vw" />
+          </div>
+        </div>
+      </div>
 
-                <div class="inputs">
-                    <div class="label">
-                        <h5>Visibility*</h5>
-                        <select>
-                            <option>Private</option>
-                            <option>Public</option>
-                        </select>
-                    </div>
-                    <div>
-                        <p>**NOTE: Selecting "public" will require an additional review and approval process.</p>
-                    </div>
-                    <div class="label">
-                        <h5>Community Guidelines*</h5>
-
-                        <input type="checkbox"><label>Default Settings</label>
-                        <div style="display: flex; flex-wrap: wrap; line-height: 24px; gap: 12px;">
-                            <input type="checkbox"><label>Allow Profanity</label>
-                            <input type="checkbox"><label>Age-Restriction (18+)</label>
-                            <input type="checkbox"><label>Spam Protection</label>
-                            <input type="checkbox"><label>Allow Image Sending</label>
-                            <input type="checkbox"><label>Auto Ban</label>
-                            
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!--4, Choose Categories-->
-            <div class="subsec">
-                <div class="subhead">
-                    <div class="num"><h4 style="line-height: 0px">4</h4></div>
-                    <h3>Personalize</h3>
-                </div>
-
-                <div class="inputs">
-                    <div class="label">
-                        <h5>Color Scheme</h5>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div>customize <span></span></div>
-                    </div>
-
-                    <div class="label">
-                        <h5>Thumbnail</h5>
-
-                        <div>Component Placeholder</div>
-                        <p>OR</p>
-                        <input type="text" placeholder="Paste Image URL">
-                    </div>
-                </div>
-            </div>
+      <!-- 2. Categories -->
+      <div class="subsec">
+        <div class="subhead">
+          <div class="num"><h4>2</h4></div>
+          <h3>Choose Categories</h3>
+          <p>(up to 5)</p>
         </div>
 
-        <button>Create Community</button>
         
-    `;
+        <div class="inputs">
+            ${CATEGORIES.map(
+                category => html`
+                    <pill-button class="pill" .category=${category}> ${category}</pill-button>
+                `
+            )}
+        </div>
+
+      </div>
+
+      <!-- 3. Rules -->
+      <div class="subsec">
+        <div class="subhead">
+          <div class="num"><h4>3</h4></div>
+          <h3>Rules & Privileges</h3>
+        </div>
+
+        <div class="inputs">
+          <div class="label">
+            <h5>Visibility*</h5>
+            <select>
+              <option>Private</option>
+              <option>Public</option>
+            </select>
+          </div>
+
+          <div class="label">
+            <h5>Community Guidelines</h5>
+            <div class="rules">
+              <label><input type="checkbox" /> Allow Profanity</label>
+              <label><input type="checkbox" /> 18+ Age Restriction</label>
+              <label><input type="checkbox" checked /> Spam Protection</label>
+              <label><input type="checkbox" /> Allow Image Sending</label>
+              <label><input type="checkbox" /> Auto-Ban</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Personalization -->
+      <div class="subsec">
+        <div class="subhead">
+          <div class="num"><h4>4</h4></div>
+          <h3>Personalize</h3>
+        </div>
+
+        <div class="inputs">
+          <div class="label">
+            <h5>Thumbnail</h5>
+            <input placeholder="Paste image URL" style="width: 30vw" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit">
+      <button @click=${handleSubmit}>Create Community</button>
+    </div>
+  `;
 };
 
 export default CommunityCreationPage;

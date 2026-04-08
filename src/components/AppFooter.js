@@ -31,33 +31,33 @@ class AppFooter extends LitElement {
                 width: 100%;
             }
             #container {
-                display: flex;
                 background-color: var(--color-5);
                 color: var(--color-text-light);
                 align-items: center;
-                gap: 24px;
                 margin-inline: auto;
                 justify-content: space-between;
-                padding: 12px 24px;
+                padding: 48px 48px;
                 box-sizing: border-box;
             }
-            #left {
+            #top {
                 display: flex;
+                gap: 24px;
+                justify-self: center;
+            }
+            a {
+                color: #999;
+                text-decoration: none;
             }
         `;
     }
     
     render() {
-        const updated = new Date(this.appUpdateDate).toLocaleString();
+        const updated = new Date(this.appUpdateDate).toLocaleDateString();
         return html`
             <footer id="container">
-                <div id="left">
-                    <img src="${this.appLogoUrlInverted}">
-                    <p>${updated}</p>
+                <div id="top">
+                    <p>Copywright © ${updated}</p>
                     <p>Litera</p>
-                </div>
-                <div id="right">
-                    <a href="${this.appContactUrl}">contact</a>
                 </div>
             </footer>
         `;

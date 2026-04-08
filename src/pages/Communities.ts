@@ -4,12 +4,17 @@ import { html, css, type TemplateResult } from "lit";
 import '../components/SearchBar.js';
 import '../components/CommunityCard.js';
 import '../components/CommunityContainer.js';
+import '../components/Breadcrumb.js';
+import { getCurrentUser } from "../Services.js";
 
 interface ComProps {
     currentPath?: string;
 }
 
 export const CommunitiesPage = ({ currentPath = '/communities' }: ComProps): TemplateResult => {
+    const user = getCurrentUser();
+    const isAuthenticated = !!user;
+
     const styles = css`
         :host {
             display: block;
@@ -32,6 +37,7 @@ export const CommunitiesPage = ({ currentPath = '/communities' }: ComProps): Tem
         }
     `
     return html`
+        <bread-crumb></bread-crumb>
         <style>${styles}</style>
         <div class="banner">
             <h1 style="padding: 24px 64px;">Communities</h1>
@@ -50,16 +56,17 @@ export const CommunitiesPage = ({ currentPath = '/communities' }: ComProps): Tem
                 </community-container>
             </div>
 
-            <div class="my-communities">
-                <h3>My Communities</h3>
-                <button @click=${() => window.location.hash = '/create-community'}>New Community</button>
-                <community-container>
-                    <community-card name="My Community 1" description="This is my first community."></community-card>
-                    <community-card name="My Community 2" description="This is my second community."></community-card>
-                </community-container>
-            </div>
-
-            <img src="">
+            ${isAuthenticated ? html`
+                <div class="my-communities">
+                    <h3>My Communities</h3>
+                    <button @click=${() => window.location.hash = '#/create-community'}>New Community</button>
+                    <community-container>
+                        <community-card name="My Community 1" description="This is my first community."></community-card>
+                        <community-card name="My Community 2" description="This is my second community."></community-card>
+                    </community-container>
+                </div>
+            ` : null
+            }
         </div>
     `;
 };

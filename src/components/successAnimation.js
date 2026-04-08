@@ -22,7 +22,6 @@ class SuccessAnimation extends LitElement {
         left: 50%;
         transform: translateX(-50%);
         animation: descend 2s ease-out forwards;
-
         display: flex;
         align-items: center;
         flex-direction: column;
@@ -30,10 +29,14 @@ class SuccessAnimation extends LitElement {
 
     .string {
         position: absolute;
-        top: -150vh;
-        bottom: 100%;
-        width: 2px;
-        background-color: white;
+        top: -50vh;
+        left: 50%;
+        transform: translateX(-50%);
+        
+        object-fit: fill;
+        width: auto;
+        height: 50vh;
+        pointer-events: none;
     }
 
     .disco-ball {
@@ -50,6 +53,8 @@ class SuccessAnimation extends LitElement {
         width: 100%;
         height: 100%;
         animation: flicker 1.5s infinite alternate;
+        outline: 1px solid transparent;
+        outline-offset: -1px;
     }
 
     .light-grid {
@@ -92,7 +97,7 @@ class SuccessAnimation extends LitElement {
     
     @keyframes descend {
         to {
-        top: 20%;
+        top: 40%;
         }
     }
     
@@ -157,7 +162,8 @@ class SuccessAnimation extends LitElement {
     const wrapper = document.createElement("div");
     wrapper.classList.add("disco-wrapper");
 
-    const string = document.createElement("div");
+    const string = document.createElement("img");
+    string.src = new URL("../images/disco-string.png", import.meta.url).href;
     string.classList.add("string");
 
     const discoBall = document.createElement("div");

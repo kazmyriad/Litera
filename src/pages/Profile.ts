@@ -5,8 +5,11 @@ import { until } from 'lit/directives/until.js';
 import  {fetchUserById} from '../Services';
 import '../components/CommunityCard.js';
 import '../components/CommunityContainer.js';
-import '../components/BookCard.js';
+import '../components/BookCard.jsx';
+import '../components/Breadcrumb.js';
+import '../components/ProfileTag.js';
 import EditIcon from '../images/Edit.svg';
+import { getCurrentUser } from "../Services";
 
 interface ProfileProps {
     currentPath?: string;
@@ -15,7 +18,13 @@ interface ProfileProps {
 //functions
 
 export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): TemplateResult => {
-    const userPromise = fetchUserById(1); // hardcoded user id for testing, replace with actual logged in user id
+
+    const user = getCurrentUser();
+    if (!user) {
+        return html``; // App.tsx guard handles auth
+    }
+
+    const userPromise = fetchUserById(user.id); // hardcoded user id for testing, replace with actual logged in user id
 
     const bannerTemplate = until(
         userPromise.then(user => {
@@ -116,9 +125,9 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
 
     return html`
       <style>${styles}</style>
+      <bread-crumb></bread-crumb>
       <div id="card">
         <h2>My Profile</h2>
-
         <div class="banner">
           <img id="profileImg" src="https://t3.ftcdn.net/jpg/02/22/85/16/360_F_222851624_jfoMGbJxwRi5AWGdPgXKSABMnzCQo9RN.jpg" />
           ${bannerTemplate}
@@ -132,6 +141,17 @@ export const ProfilePage = ({ currentPath = '/profile' }: ProfileProps): Templat
         </div>
 
         <div class="lists">
+            <h4>My Interests</h4>
+                <li style="list-style: none; display:flex; gap: 25px 5px; flex-wrap: wrap;">
+                    <profile-tag text="Book"></profile-tag>
+                    <profile-tag text="Series"></profile-tag>
+                    <profile-tag text="Author"></profile-tag>
+                    <profile-tag text="IP"></profile-tag>
+                    <profile-tag text="Reading"></profile-tag>
+                    <profile-tag text="Learning"></profile-tag>
+                    <profile-tag text="Painting"></profile-tag>
+                    <profile-tag text="Cooking"></profile-tag>
+                </li>
             <h4>My Communities</h4>
             <community-container>
                 <community-card></community-card>

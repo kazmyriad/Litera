@@ -1,11 +1,12 @@
 // This file collects all the pages and component js files that are going to be referenced in frontend
 // This simplifies the reference point to a single file reference in index.html
-import './App.ts';
+import './App.tsx';
 // components
 import './components/NavBar.js';
 import './components/AppFooter.js';
 import './components/Hero.js';
 import './components/CommunityCard.js';
+import './components/BookCard.js';
 import './components/successAnimation.js';
 
 //pages

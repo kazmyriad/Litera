@@ -5,6 +5,68 @@ function handleResponse(raw: string, res: Response) {
   return JSON.parse(raw);
 }
 
+export type CreateUserPayload = {
+  username: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  dob: string | null;
+  password: string;
+};
+
+export type LoginPayload = {
+  identifier: string;
+  password: string;
+};
+
+export type AuthUser = {
+  id: number;
+  username: string;
+  email: string;
+};
+
+const STORAGE_KEY = 'litera_user';
+
+let currentUser: AuthUser | null = null;
+
+export function setCurrentUser(user: AuthUser | null) {
+  currentUser = user;
+
+  if (user) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
+  window.dispatchEvent(new CustomEvent('auth-changed', {
+    detail: {user}
+  }))
+}
+
+export function getCurrentUser(): AuthUser | null {
+  return currentUser;
+}
+
+export function isLoggedIn(): boolean {
+  return !!currentUser;
+}
+
+export function restoreAuth() {
+  if (currentUser) return;
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+
+  try {
+    currentUser = JSON.parse(raw);
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+}
+
+export function logout() {
+  setCurrentUser(null);
+}
+
 export async function fetchUserById(id:number) {
   const res = await fetch(`${API_BASE}/api/users/${id}`);
   const raw = await res.text();
@@ -43,3 +105,104 @@ export async function updateUserInformation(
   const raw = await res.text();
   return handleResponse(raw, res);
 }
+
+export async function loginUser(payload: LoginPayload) {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
+export async function createUser(payload: CreateUserPayload) {
+  const res = await fetch(`${API_BASE}/api/users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
+//Library management OOP implementation: Observer
+
+export type Book = {
+  id: number;
+  title: string;
+  favorite?: boolean;
+  tags?: string[];
+};
+
+export type LibraryObserver = (books: Book[]) => void;
+
+export class LibraryManager {
+  private books: Book[] = [];
+  private observers: LibraryObserver[] = [];
+
+  subscribe(observer: LibraryObserver) {
+    this.observers.push(observer);
+  }
+
+  unsubscribe(observer: LibraryObserver) {
+    this.observers = this.observers.filter(o => o !== observer);
+  }
+
+  private notify() {
+    this.observers.forEach(observer => observer(this.books));
+  }
+
+  getBooks() {
+    return this.books;
+  }
+
+  addBook(book: Book) {
+    this.books.push(book);
+    this.notify();
+  }
+
+  favoriteBook(bookId: number) {
+    this.books = this.books.map(book =>
+      book.id === bookId ? { ...book, favorite: !book.favorite } : book
+    );
+    this.notify();
+  }
+
+  removeBook(bookId: number) {
+    this.books = this.books.filter(book => book.id !== bookId);
+    this.notify();
+  }
+}
+
+
+//test create community function :: FIX
+import { Community } from './Community';
+
+class CommunityService {
+  private communities: Community[] = [];
+
+  createCommunity(input: Omit<Community, 'id' | 'createdAt'>): Community {
+    const community: Community = {
+      ...input,
+      id: Date.now(),
+      createdAt: new Date().toISOString()
+    };
+
+    this.communities.push(community);
+    console.log('[Mock Community Created]', community);
+
+    return community;
+  }
+
+  getCommunities(): Community[] {
+    return [...this.communities];
+  }
+
+  clear() {
+    this.communities = [];
+  }
+}
+
+export const communityService = new CommunityService();

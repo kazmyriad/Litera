@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import GoArrow from '../images/Caret-Right.svg';
+import PointArrow from '../images/Arrow.svg';  
 
 class CommunityCard extends LitElement {
     static get tag() {
@@ -22,69 +22,55 @@ class CommunityCard extends LitElement {
     }
 
     static get styles(){
-        return css`
-            .container {
+       return css`
+            :host {
                 display: flex;
                 flex-direction: column;
-                background-color: #FFFFFF;
                 overflow: hidden;
                 width: 15em;
                 height: 10em;
-                border-radius: 8px;
+                transition: ease-out .2s;
                 box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-                transition: ease-out .2s;
+                border-radius: 8px;
+            }
+            .top {
+                position: relative;
+                background-image: url("https://images.pexels.com/photos/1172018/pexels-photo-1172018.jpeg");
+                background-size: cover;
+                background-position: center;
+                justify-content: flex-end;
+                display: flex;
+                padding: 0.5em;
             }
 
-            .container:hover{
-                transition: ease-in .2s;
-                height: 10em;
-
-                .info-button{
-                    background-color: var(--color-5);
-                    transition: ease-in .2s;
-                }
-
-                .thumbnail img{
-                    opacity: 50%;
-                    transition: ease-in .2s;
-                }
-
-                button img{
-                    filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(251deg) brightness(112%) contrast(101%);
-                }
+            
+            .top::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(
+                    rgba(0, 0, 0, 0.8),
+                    rgba(0, 0, 0, 0.2)
+                );
+                transition: opacity 0.4s ease;
             }
 
-            .thumbnail{
-                width:100%;
-                height: 100%;
-                background-color: #000000;
-                transition: ease-out .2s;
-            }
 
-            img{
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
+            .container:hover .top::before{
+                opacity: 0.6;
             }
 
             .info-button{
-                background-color: var(--color-2);
+                background-color: transparent;
+                position: relative;
                 width: 30%;
+                justify-self: end;
                 align-items: center;
-            }
-
-            .content-container{
-                display: flex;
-                height: 100%;
-            }
-
-            .title-container{
-                background-color: var(--color-4);
+                padding: 0.5em;
             }
 
             h3{
                 margin: .5em;
-                color: var(--color-3);
                 transition: ease-out .2s;
             }
 
@@ -107,16 +93,15 @@ class CommunityCard extends LitElement {
     render(){
         return html`
         <div class="container">
-            <div class="title-container">
+            <div class="top">
+                <button class="info-button" @click=${() => window.location.hash = '/community-detail'}>
+                    <img src="${PointArrow}" alt="Info">
+                </button>
+            </div>
+
+            <div class="bottom">
                 <h3>${this.name}</h3>
             </div>
-           <div class="content-container">
-             <div class="thumbnail">
-                <img src="${this.thumbnail}" alt="${this.name} thumbnail">
-            </div>
-            <button class="info-button">
-                <img src="${GoArrow}">
-            </button>
         </div>
         `;
     }
