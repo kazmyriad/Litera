@@ -2,13 +2,16 @@
 import { html, css, LitElement } from "lit";
 import ProfileIcon from '../images/Profile.svg';
 import BookCaseIcon from '../images/BookCase.svg';
+import HomeIcon from '../images/Home.svg';
+import CommunityIcon from '../images/Community.svg';
+import LibraryIcon from '../images/Library.svg';
 import { getCurrentUser, isLoggedIn, logout } from '../Services';
 
 const NAV_LINKS = [
-    {name: 'home', path: '/'},
-    {name: 'communities', path: '/communities'},
-    {name: 'libraries', path: '/libraries'},
-    {name: 'profile', path: '/profile'},
+    {name: 'home', path: '/', icon: HomeIcon},
+    {name: 'communities', path: '/communities', icon: CommunityIcon},
+    {name: 'libraries', path: '/libraries', icon: LibraryIcon},
+    {name: 'profile', path: '/profile', icon: ProfileIcon},
 ];
 
 const SUB_TABS = {
@@ -111,83 +114,97 @@ class NavBar extends LitElement {
                 display: block;
                 width: 100%;
                 color: white;
-                //font-family: "K2D Mono";
+                font-family: 'Arial', sans-serif;
+            }
+            img {
+                filter: brightness(0) invert(1);
+            }
+            .site-icon {
+                filter: none;
             }
             nav#container {
                 display: flex;
-                background-color: var(--color-4);
+                background: linear-gradient(135deg, var(--color-4) 0%, var(--color-5) 100%);
                 align-items: center;
                 gap: 24px;
-                margin-inline: auto;
+                margin: 0;
                 justify-content: space-between;
-                padding: 12px 24px;
+                padding: 16px 32px;
                 box-sizing: border-box;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             }
             #left {
                 display: flex;
                 gap: 16px;
                 align-items: center;
-                justify-content: space-between;
+                justify-content: flex-start;
             }
-            #right{
+            #right {
                 display: flex;
                 justify-content: flex-end;
-                width: 40%;
                 align-items: center;
+                gap: 16px;
             }
-            button{
+            button {
                 background-color: transparent;
                 border: none;
-                padding: 1em;
-                margin-right: 1em;
+                padding: 12px 16px;
                 color: white;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 8px;
+                transition: all 0.3s ease;
             }
-            button:hover{
+            button:hover {
+                background-color: rgba(255, 255, 255, 0.1);
                 color: var(--color-text-light);
-                transition: 0.3s ease;
+                transform: translateY(-2px);
                 cursor: pointer;
             }
             button.active {
-                color: var(--color-text-light); 
+                background-color: rgba(255, 255, 255, 0.2);
+                color: var(--color-text-light);
                 font-weight: bold;
             }
-
             .nav-item {
-            position: relative;
+                position: relative;
             }
-
             .subtabs {
                 position: absolute;
                 top: 100%;
                 left: 0;
-                background: rgba(0, 0, 0, 0.85);
-                padding: 8px 0;
-                border-radius: 6px;
+                background: rgba(0, 0, 0, 0.9);
+                padding: 12px 0;
+                border-radius: 8px;
                 min-width: 200px;
                 z-index: 100;
-                transition: 2s ease;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                transition: opacity 0.3s ease;
             }
-
             .subtabs button {
                 display: block;
                 width: 100%;
-                padding: 8px 12px;
+                padding: 10px 16px;
                 background: none;
                 border: none;
                 color: white;
                 text-align: left;
+                border-radius: 0;
             }
-
             .subtabs button:hover {
                 background-color: var(--color-1);
             }
-            img {
-                max-width: 80px;
+            .site-icon {
+                transition: transform 0.3s ease;
             }
-            img:hover{
-                transform: rotate(360deg);
-                transition: 5s ease;
+            .site-icon:hover {
+                transform: scale(1.1);
+            }
+            h2 {
+                margin: 0;
+                font-size: 1.5rem;
+                font-weight: 600;
             }
         `;
     }
@@ -227,7 +244,7 @@ class NavBar extends LitElement {
         return html `
             <nav id="container">
                 <div id="left">
-                    <img src=${BookCaseIcon} alt="Bookcase Icon" style="width: 40px; height: 40px;">
+                    <img class="site-icon" src=${BookCaseIcon} alt="Bookcase Icon" style="width: 40px; height: 40px;">
                     <!--<img src="https://ik.imagekit.io/kjonesLitera/Disco.png?updatedAt=1771898369768">-->
                     <h2>Litera</h2>
                 </div>
@@ -251,6 +268,7 @@ class NavBar extends LitElement {
                                 }}
                                 aria-current=${this._isActive(link.path) ? 'page' : 'false'}
                             >
+                                <img src=${link.icon} alt=${link.name} style="width: 20px; height: 20px; margin-right: 8px;">
                                 ${link.name === 'profile' && !this.user ? 'login' : link.name}
                             </button>
 
