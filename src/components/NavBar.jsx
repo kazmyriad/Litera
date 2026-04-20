@@ -1,6 +1,6 @@
 // This file defines and styles the NavBar element
 import { html, css, LitElement } from "lit";
-import ProfileIcon from '../images/Profile.svg';
+import ProfileIcon from '../images/Login.svg';
 import BookCaseIcon from '../images/BookCase.svg';
 import HomeIcon from '../images/Home.svg';
 import CommunityIcon from '../images/Community.svg';

@@ -58,7 +58,7 @@ export const HomePage = ({ currentPath = '/' }: HomeProps): TemplateResult => {
         }
         h2 {
             text-align: center;
-            color: #555;
+            color: var(--color-4);
             margin-bottom: 32px;
             font-size: 2rem;
         }
