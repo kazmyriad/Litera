@@ -101,21 +101,24 @@ export class AuthOverlay extends LitElement {
 
     button{
       border: none;
-      background-color: var(--color-4);
-      border-radius: 2em;
+      background: linear-gradient(135deg, var(--color-4) 0%, var(--color-5) 100%);
+      border-radius: 12px;
       font-weight: bold;
-      font-size: 2em;
-      color: var(--color-5);
-      padding: 1em 0 1em 0;
-      transition: 0.3s ease;
-      width: 50%;
+      font-size: 1.2em;
+      color: white;
+      padding: 12px 24px;
+      transition: all 0.3s ease;
+      width: 100%;
       margin: 0 auto;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
     }
 
     button:hover{
-      color: var(--color-3);
-      transition: 0.3s ease;
-      width: 100%;
+      background: linear-gradient(135deg, var(--color-5) 0%, var(--color-4) 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
     }
 
     button.exit {
@@ -124,7 +127,7 @@ export class AuthOverlay extends LitElement {
       align-items: center;
       justify-content: center;
       background-color: var(--color-3);
-      color: var(--color-2);
+      color: var(--color-3);
       height: 1em;
       padding: 1em;
       font-size: 1em;
@@ -134,7 +137,6 @@ export class AuthOverlay extends LitElement {
     }
 
     button.exit:hover{
-      color: var(--color-1);
       background-color: var(--color-2);
       transition: 0.3s ease;
     }
