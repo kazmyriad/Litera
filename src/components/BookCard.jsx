@@ -116,6 +116,9 @@ class BookCard extends LitElement {
             <div class="book">
                 <h3 class="title">${this.title || this.name || "Book Title"}</h3>
                 <img src="${PointArrow}" alt="Info">
+                <button onClick=${() => libraryManager.favoriteBook(book.id)}>
+                ${book.favorite ? "Unfavorite" : "Favorite"}
+                </button>
             </div>
         
         `;
@@ -127,6 +130,3 @@ class BookCard extends LitElement {
 
 customElements.define(BookCard.tag, BookCard);
 
-            // <button onClick=${() => libraryManager.favoriteBook(book.id)}>
-            //     ${book.favorite ? "Unfavorite" : "Favorite"}
-            // </button>

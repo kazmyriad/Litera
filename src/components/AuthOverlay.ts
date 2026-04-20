@@ -80,10 +80,44 @@ export class AuthOverlay extends LitElement {
       padding-bottom: 24px;
     }
 
+    input{
+      border: none;
+      background-color: #dce7d2;
+      color: var(--color-5);
+      font-weight: bold;
+      padding: 1em;
+      border-radius: 20px;
+    }
+
+    input::placeholder{
+      color: #afbda2;
+      font-weight: normal;
+    }
+
     .required::after {
       content: ' *';
       color: red;
     }
+
+    button{
+      border: none;
+      background-color: var(--color-4);
+      border-radius: 2em;
+      font-weight: bold;
+      font-size: 2em;
+      color: var(--color-5);
+      padding: 1em 0 1em 0;
+      transition: 0.3s ease;
+      width: 50%;
+      margin: 0 auto;
+    }
+
+    button:hover{
+      color: var(--color-3);
+      transition: 0.3s ease;
+      width: 100%;
+    }
+
 
     .wrapper {
       font-size: 10px;
