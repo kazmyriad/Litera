@@ -16,30 +16,51 @@ export const HomePage = ({ currentPath = '/' }: HomeProps): TemplateResult => {
     const style = css`
         :host {
             display: block;
+            background-color: #fefefe;
         }
         div.content {
             margin: 48px;
+            background-color: #f9f5f0;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
         }
         ul {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 48px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
             padding: 0;
-
+            list-style: none;
         }
         li {
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: white;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
             padding: 24px;
-            list-style-type: none;
+            border-radius: 12px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        li:hover {
+            transform: translateY(-4px);
+            box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.15);
         }
         li h4 {
-            width: fill;
+            margin-top: 16px;
+            text-align: center;
+            color: var(--color-5);
+            font-weight: 600;
         }
         img {
             width: 100%;
             height: 200px;
             max-height: 250px;
             object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+        h2 {
+            text-align: center;
+            color: #555;
+            margin-bottom: 32px;
+            font-size: 2rem;
         }
     `
     return html`
