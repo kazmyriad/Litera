@@ -1,19 +1,39 @@
-//this is where we would write the frontend for communities
-// ---- would also need to use sql-related variables to load in communities (likely through a map)
-import { html, css, type TemplateResult } from "lit";
+import { html, css, LitElement, type TemplateResult } from 'lit';
+import { customElement, state, property } from 'lit/decorators.js';
 import '../components/SearchBar.jsx';
 import '../components/CommunityCard.jsx';
 import '../components/CommunityContainer.jsx';
 import '../components/JoinButton.jsx';
+import {
+  getCommunityById,
+  getMembership,
+  joinCommunity,
+  leaveCommunity,
+  updateCommunity,
+  deleteCommunity,
+  getCurrentUser,
+  type Community,
+  type MembershipStatus,
+} from '../Services.js';
 
-interface ComProps {
-    currentPath?: string;
-}
+@customElement('community-detail-page')
+export class CommunityDetailPage extends LitElement {
+  @property({ type: Number }) communityId = 0;
 
-export const CommunityDetailPage = ({
-  currentPath = "/community-detail",
-}: ComProps): TemplateResult => {
-  const styles = css`
+  @state() private community: Community | null = null;
+  @state() private membership: MembershipStatus = { isMember: false, role: null };
+  @state() private loading = true;
+  @state() private editMode = false;
+  @state() private showDeleteConfirm = false;
+
+  // Edit form values — set in openEdit() before editMode toggles to true
+  private editName = '';
+  private editDescription = '';
+  private editVisibility: 'public' | 'private' = 'public';
+  private editColorScheme = 'default';
+  private editThumbnailUrl = '';
+
+  static styles = css`
     :host {
       display: block;
       min-height: 100vh;
@@ -42,6 +62,13 @@ export const CommunityDetailPage = ({
       object-fit: cover;
     }
 
+    .hero-placeholder {
+      display: block;
+      width: 100%;
+      height: 420px;
+      background: linear-gradient(135deg, var(--color-4), var(--color-5));
+    }
+
     .content {
       padding: 36px 42px 48px;
     }
@@ -54,10 +81,17 @@ export const CommunityDetailPage = ({
       margin-bottom: 32px;
     }
 
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
     .community-title {
       font-size: 2rem;
       font-weight: 700;
-      margin: 0 0 8px;
+      margin: 0;
     }
 
     .member-count {
@@ -255,6 +289,117 @@ export const CommunityDetailPage = ({
       color: #333;
     }
 
+    /* Action button */
+    .action-btn {
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn-join { background: var(--color-4); color: white; }
+    .btn-leave { background: white; color: var(--color-4); border: 2px solid var(--color-4); }
+    .btn-edit { background: var(--color-5); color: white; }
+    .action-btn:hover { opacity: 0.85; }
+
+    /* Modals */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      width: 540px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal h2 { margin: 0 0 24px; }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .form-field label { font-weight: 600; font-size: 0.9rem; }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.95rem;
+    }
+
+    .form-field textarea { resize: vertical; min-height: 80px; }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn-save {
+      background: var(--color-4);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      background: #e0e0e0;
+      color: #333;
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-delete {
+      background: #c0392b;
+      color: white;
+      padding: 10px 0;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 24px;
+    }
+
+    .btn-confirm-delete {
+      background: #c0392b;
+      color: white;
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .delete-warning { color: #c0392b; font-weight: 600; margin-bottom: 8px; }
+
     @media (max-width: 900px) {
       .page {
         margin: 20px 16px 40px;
@@ -309,121 +454,299 @@ export const CommunityDetailPage = ({
     }
   `;
 
-  return html`
-    <style>${styles}</style>
+  connectedCallback() {
+    super.connectedCallback();
+    this.load();
+  }
 
-    <main class="page">
-      <section class="hero">
-        <img
-          src="https://www.baltimoremagazine.com/wp-content/uploads/2026/02/wuthering-heights-header-1-1200x675.jpg"
-          alt="Movie Adaptations community banner"
-        />
-      </section>
+  updated(changedProps: Map<string, unknown>) {
+    if (changedProps.has('communityId')) this.load();
+  }
 
-      <section class="content">
-        <div class="top-grid">
-          <div>
-            <h1 class="community-title">Movie Adaptations</h1>
-            <div class="member-count">2.4k members</div>
+  private async load() {
+    if (!this.communityId) return;
+    this.loading = true;
+    try {
+      const [community, membership] = await Promise.all([
+        getCommunityById(this.communityId),
+        getMembership(this.communityId),
+      ]);
+      this.community = community;
+      this.membership = membership;
+    } catch (e) {
+      console.error('Failed to load community', e);
+    } finally {
+      this.loading = false;
+    }
+  }
 
-            <div class="subheading">Currently Reading:</div>
-            <div class="current-book">
-              <img
-                src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1631088473i/6185.jpg"
-                alt="Wuthering Heights cover"
-              />
-              <div class="current-book-info">
-                <div class="current-book-title">Wuthering Heights</div>
-                <div class="current-book-author">by Emily Bronte</div>
-              </div>
-            </div>
+  private openEdit() {
+    if (!this.community) return;
+    this.editName = this.community.name;
+    this.editDescription = this.community.description;
+    this.editVisibility = this.community.visibility;
+    this.editColorScheme = this.community.colorScheme || 'default';
+    this.editThumbnailUrl = this.community.thumbnailUrl || '';
+    this.editMode = true;
+  }
+
+  private async handleSave() {
+    if (!this.community) return;
+    try {
+      this.community = await updateCommunity(this.community.id, {
+        name: this.editName,
+        description: this.editDescription,
+        visibility: this.editVisibility,
+        colorScheme: this.editColorScheme,
+        thumbnailUrl: this.editThumbnailUrl,
+        categories: this.community.categories,
+        rules: this.community.rules,
+        ownerId: this.community.ownerId,
+      });
+      this.editMode = false;
+    } catch (e) {
+      console.error('Failed to update community', e);
+    }
+  }
+
+  private async handleJoinLeave() {
+    if (!this.community) return;
+    try {
+      if (this.membership.isMember) {
+        await leaveCommunity(this.community.id);
+        this.membership = { isMember: false, role: null };
+      } else {
+        const result = await joinCommunity(this.community.id);
+        this.membership = { isMember: true, role: result.membership.community_role };
+      }
+    } catch (e) {
+      console.error('Failed to join/leave community', e);
+    }
+  }
+
+  private async handleDelete() {
+    if (!this.community) return;
+    try {
+      await deleteCommunity(this.community.id);
+      window.location.hash = '#/communities';
+    } catch (e) {
+      console.error('Failed to delete community', e);
+    }
+  }
+
+  private renderActionButton(): TemplateResult {
+    const user = getCurrentUser();
+    if (!user || !this.community) return html``;
+
+    const isAdmin = this.membership.role === 'admin' || user.id === this.community.ownerId;
+    if (isAdmin) {
+      return html`<button class="action-btn btn-edit" @click=${this.openEdit.bind(this)}>Edit Community</button>`;
+    }
+
+    return html`
+      <button
+        class="action-btn ${this.membership.isMember ? 'btn-leave' : 'btn-join'}"
+        @click=${this.handleJoinLeave.bind(this)}
+      >${this.membership.isMember ? 'Leave' : 'Join'}</button>
+    `;
+  }
+
+  private renderEditModal(): TemplateResult {
+    return html`
+      <div class="overlay">
+        <div class="modal">
+          <h2>Edit Community</h2>
+
+          <div class="form-field">
+            <label>Name</label>
+            <input .value=${this.editName} @input=${(e: Event) => { this.editName = (e.target as HTMLInputElement).value; }} />
           </div>
 
-          <div>
-            <div class="moderators-title">Moderated by:</div>
-            <div class="moderators">
-              <div class="moderator">
-                <div class="avatar"></div>
-                <span>Kelley</span>
-              </div>
-              <div class="moderator">
-                <div class="avatar"></div>
-                <span>Mark</span>
-              </div>
-            </div>
+          <div class="form-field">
+            <label>Description</label>
+            <textarea @input=${(e: Event) => { this.editDescription = (e.target as HTMLTextAreaElement).value; }}>${this.editDescription}</textarea>
+          </div>
 
-            <div class="subheading">Previous Reads:</div>
-            <div class="previous-reads">
-              <div class="book-thumb">
-                <img
-                  src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1660273739i/84.jpg"
-                  alt="Frankenstein cover"
-                />
-                <span>Frankenstein</span>
-              </div>
-              <div class="book-thumb">
-                <img
-                  src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1320399351i/1885.jpg"
-                  alt="Pride and Prejudice cover"
-                />
-                <span>Pride & Prejudice</span>
-              </div>
-              <div class="book-thumb">
-                <img
-                  src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1447303603i/2767052.jpg"
-                  alt="The Hunger Games cover"
-                />
-                <span>The Hunger Games</span>
-              </div>
-            </div>
+          <div class="form-field">
+            <label>Visibility</label>
+            <select @change=${(e: Event) => { this.editVisibility = (e.target as HTMLSelectElement).value as 'public' | 'private'; }}>
+              <option value="public" ?selected=${this.editVisibility === 'public'}>Public</option>
+              <option value="private" ?selected=${this.editVisibility === 'private'}>Private</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Color Scheme</label>
+            <select @change=${(e: Event) => { this.editColorScheme = (e.target as HTMLSelectElement).value; }}>
+              <option value="default" ?selected=${this.editColorScheme === 'default'}>Default</option>
+              <option value="dark" ?selected=${this.editColorScheme === 'dark'}>Dark</option>
+              <option value="ocean" ?selected=${this.editColorScheme === 'ocean'}>Ocean</option>
+              <option value="forest" ?selected=${this.editColorScheme === 'forest'}>Forest</option>
+              <option value="sunset" ?selected=${this.editColorScheme === 'sunset'}>Sunset</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Thumbnail URL</label>
+            <input .value=${this.editThumbnailUrl} @input=${(e: Event) => { this.editThumbnailUrl = (e.target as HTMLInputElement).value; }} />
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-cancel" @click=${() => { this.editMode = false; }}>Cancel</button>
+            <button class="btn-save" @click=${this.handleSave.bind(this)}>Save Changes</button>
+          </div>
+
+          <button class="btn-delete" @click=${() => { this.editMode = false; this.showDeleteConfirm = true; }}>
+            Delete Community
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderDeleteConfirm(): TemplateResult {
+    const name = this.community?.name ?? 'this community';
+    return html`
+      <div class="overlay">
+        <div class="modal">
+          <h2>Delete Community</h2>
+          <p class="delete-warning">This action cannot be undone.</p>
+          <p>Are you sure you want to permanently delete <strong>${name}</strong>?</p>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click=${() => { this.showDeleteConfirm = false; }}>Cancel</button>
+            <button class="btn-confirm-delete" @click=${this.handleDelete.bind(this)}>Yes, Delete</button>
           </div>
         </div>
+      </div>
+    `;
+  }
 
-        <section class="schedule">
-          <h2 class="section-title">Meeting Schedule:</h2>
-          <div class="meeting-grid">
-            ${[
-              "Chapter 1 Discussion",
-              "Chapter 2 Discussion",
-              "Chapter 3 Discussion",
-              "Chapter 4 Discussion",
-            ].map(
-              (meeting) => html`
-                <article class="meeting-card">
-                  <div class="meeting-head">
-                    <span>Monday</span>
-                    <span>4/6</span>
-                  </div>
-                  <div class="meeting-body">
-                    <div class="meeting-topic">${meeting}</div>
-                    <button class="meeting-button">Join</button>
-                  </div>
-                </article>
-              `
-            )}
-          </div>
+  render(): TemplateResult {
+    if (this.loading) {
+      return html`<div style="padding:48px;text-align:center;">Loading...</div>`;
+    }
+    if (!this.community) {
+      return html`<div style="padding:48px;text-align:center;">Community not found.</div>`;
+    }
+
+    const c = this.community;
+
+    return html`
+      ${this.editMode ? this.renderEditModal() : null}
+      ${this.showDeleteConfirm ? this.renderDeleteConfirm() : null}
+
+      <main class="page">
+        <section class="hero">
+          ${c.thumbnailUrl
+            ? html`<img src="${c.thumbnailUrl}" alt="${c.name} banner" />`
+            : html`<div class="hero-placeholder"></div>`
+          }
         </section>
 
-        <section class="chat">
-          <h2 class="section-title">Chat</h2>
-          <div class="chat-list">
-            ${[
-              "#Chapter 1 Discussion",
-              "#Chapter 2 Discussion",
-              "#Chapter 3 Discussion",
-            ].map(
-              (channel) => html`
-                <div class="chat-row">
-                  <span>${channel}</span>
-                  <span class="chevron">˅</span>
+        <section class="content">
+          <div class="top-grid">
+            <div>
+              <div class="title-row">
+                <h1 class="community-title">${c.name}</h1>
+                ${this.renderActionButton()}
+              </div>
+              <div class="member-count">${c.description}</div>
+
+              <div class="subheading">Currently Reading:</div>
+              <div class="current-book">
+                <img
+                  src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1631088473i/6185.jpg"
+                  alt="Wuthering Heights cover"
+                />
+                <div class="current-book-info">
+                  <div class="current-book-title">Wuthering Heights</div>
+                  <div class="current-book-author">by Emily Bronte</div>
                 </div>
-              `
-            )}
+              </div>
+            </div>
+
+            <div>
+              <div class="moderators-title">Moderated by:</div>
+              <div class="moderators">
+                <div class="moderator">
+                  <div class="avatar"></div>
+                  <span>${c.owner ?? 'Unknown'}</span>
+                </div>
+              </div>
+
+              <div class="subheading">Previous Reads:</div>
+              <div class="previous-reads">
+                <div class="book-thumb">
+                  <img
+                    src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1660273739i/84.jpg"
+                    alt="Frankenstein cover"
+                  />
+                  <span>Frankenstein</span>
+                </div>
+                <div class="book-thumb">
+                  <img
+                    src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1320399351i/1885.jpg"
+                    alt="Pride and Prejudice cover"
+                  />
+                  <span>Pride & Prejudice</span>
+                </div>
+                <div class="book-thumb">
+                  <img
+                    src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1447303603i/2767052.jpg"
+                    alt="The Hunger Games cover"
+                  />
+                  <span>The Hunger Games</span>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <section class="schedule">
+            <h2 class="section-title">Meeting Schedule:</h2>
+            <div class="meeting-grid">
+              ${[
+                "Chapter 1 Discussion",
+                "Chapter 2 Discussion",
+                "Chapter 3 Discussion",
+                "Chapter 4 Discussion",
+              ].map(
+                (meeting) => html`
+                  <article class="meeting-card">
+                    <div class="meeting-head">
+                      <span>Monday</span>
+                      <span>4/6</span>
+                    </div>
+                    <div class="meeting-body">
+                      <div class="meeting-topic">${meeting}</div>
+                      <button class="meeting-button">Join</button>
+                    </div>
+                  </article>
+                `
+              )}
+            </div>
+          </section>
+
+          <section class="chat">
+            <h2 class="section-title">Chat</h2>
+            <div class="chat-list">
+              ${[
+                "#Chapter 1 Discussion",
+                "#Chapter 2 Discussion",
+                "#Chapter 3 Discussion",
+              ].map(
+                (channel) => html`
+                  <div class="chat-row">
+                    <span>${channel}</span>
+                    <span class="chevron">˅</span>
+                  </div>
+                `
+              )}
+            </div>
+          </section>
         </section>
-      </section>
-    </main>
-  `;
-};
+      </main>
+    `;
+  }
+}
 
 export default CommunityDetailPage;

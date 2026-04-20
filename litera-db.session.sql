@@ -1,6 +1,3 @@
-INSERT INTO litera.communities (owner_id, name, description)
-VALUES (
-    1,
-    'Movie Adaptations',
-    'A community for fans of movie adaptations of books to discuss and share their thoughts on the adaptations, compare them to the original books, and recommend their favorite adaptations to others.'
-);
+UPDATE litera.communities
+SET thumbnail_url = 'https://www.baltimoremagazine.com/wp-content/uploads/2026/02/wuthering-heights-header-1-1200x675.jpg'
+WHERE id = 1;
