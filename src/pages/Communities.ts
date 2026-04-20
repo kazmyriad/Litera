@@ -27,7 +27,10 @@ export class CommunitiesPage extends LitElement {
     }
 
     private renderCommunityCard(community: Community): TemplateResult {
-        return html`<community-card name="${community.name}" description="${community.description}"></community-card>`;
+        return html`
+          <div style="cursor:pointer" @click=${() => { window.location.hash = `#/community-detail/${community.id}`; }}>
+            <community-card name="${community.name}" description="${community.description}"></community-card>
+          </div>`;
     }
 
     render(): TemplateResult {

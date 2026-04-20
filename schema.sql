@@ -31,7 +31,7 @@ CREATE TABLE "users" (
    "owner_id" int NOT NULL,
    "name" varchar(255) NOT NULL,
    "description" text,
-   "categories" text,
+a   "categories" text,
    "visibility" enum('public','private') DEFAULT 'public',
    "rules" text,
    "color_scheme" varchar(50) DEFAULT 'default',

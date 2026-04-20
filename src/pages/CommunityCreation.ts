@@ -118,69 +118,66 @@ export const CommunityCreationPage = ({
     }
   `;
 
-    const handleSubmit = async (e: Event) => {
-      e.preventDefault();
+  // Closure state — updated by @input/@change handlers so handleSubmit
+  // never has to query the DOM (which would fail inside shadow DOM).
+  let nameValue = '';
+  let descriptionValue = '';
+  let visibilityValue = 'public';
+  let colorSchemeValue = 'default';
+  let thumbnailValue = '';
+  const rulesState = {
+    allowProfanity: false,
+    ageRestricted: false,
+    spamProtection: true,
+    allowImages: false,
+    autoBan: false,
+  };
 
-      try {
-        const pills = Array.from(
-            document.querySelectorAll("pill-button")
-        ) as PillButton[];
-          
-        const categories = pills
-          .filter(p => p.selected)
-          .map(p => p.category as any) as Categories;
+  const handleSubmit = async (e: Event) => {
+    e.preventDefault();
 
-    
-        const user = getCurrentUser();
-        if (!user) {
-          alert('You must be logged in to create a community');
-          return;
-        }
+    try {
+      // pill-button elements live inside the app-root shadow root;
+      // document.querySelectorAll cannot pierce it.
+      const shadowRoot = document.querySelector('app-root')?.shadowRoot ?? document;
+      const pills = Array.from(shadowRoot.querySelectorAll('pill-button')) as PillButton[];
+      const categories = pills
+        .filter(p => p.selected)
+        .map(p => p.category as any) as Categories;
 
-        const nameInput = document.querySelector('input[placeholder="Community Name"]') as HTMLInputElement;
-        const descriptionInput = document.querySelector('input[placeholder="Describe your community"]') as HTMLInputElement;
-        const visibilitySelect = document.querySelector('select') as HTMLSelectElement;
-        const thumbnailInput = document.querySelector('input[placeholder="Paste image URL"]') as HTMLInputElement;
-
-        const rules: any = {};
-        const checkboxes = document.querySelectorAll('input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
-        const keys = ['allowProfanity', 'ageRestricted', 'spamProtection', 'allowImages', 'autoBan'];
-        checkboxes.forEach((cb, i) => {
-          rules[keys[i]] = cb.checked;
-        });
-
-        const name = nameInput?.value || 'New Community';
-        const description = descriptionInput?.value || 'Created from form';
-        const visibility = visibilitySelect?.value || 'public';
-        const thumbnailUrl = thumbnailInput?.value || '';
-
-        await createCommunity({
-            name,
-            description,
-            categories,
-            visibility: visibility as 'public' | 'private',
-            rules,
-            //colorScheme: 'default',
-            thumbnailUrl,
-            ownerId: user.id
-          });
-
-          const successAnim = document.createElement("success-animation")
-
-          successAnim.addEventListener("finished", () => {
-            window.location.href = "#/communities";
-          });
-
-          document.body.appendChild(successAnim);
-          
-          await customElements.whenDefined("success-animation");
-
-          (successAnim as any).play();
-
-      } catch(e) {
-        console.error(e);
+      const user = getCurrentUser();
+      if (!user) {
+        alert('You must be logged in to create a community');
+        return;
       }
-    };
+
+      await createCommunity({
+        name: nameValue || 'New Community',
+        description: descriptionValue,
+        categories,
+        visibility: visibilityValue as 'public' | 'private',
+        rules: rulesState,
+        colorScheme: colorSchemeValue,
+        thumbnailUrl: thumbnailValue,
+        ownerId: user.id
+      });
+
+      const successAnim = document.createElement('success-animation');
+
+      successAnim.addEventListener('finished', () => {
+        window.location.href = '#/communities';
+      });
+
+      document.body.appendChild(successAnim);
+
+      await customElements.whenDefined('success-animation');
+
+      (successAnim as any).play();
+
+    } catch(e) {
+      console.error(e);
+    }
+  };
 
   return html`
     <style>${styles}</style>
@@ -207,12 +204,20 @@ export const CommunityCreationPage = ({
 
           <div class="label">
             <h5>Community Name*</h5>
-            <input placeholder="Community Name" style="width: 30vw" />
+            <input
+              placeholder="Community Name"
+              style="width: 30vw"
+              @input=${(e: Event) => { nameValue = (e.target as HTMLInputElement).value; }}
+            />
           </div>
 
           <div class="label" style="flex: 1;">
             <h5>Description</h5>
-            <input placeholder="Describe your community" style="width: 46vw" />
+            <input
+              placeholder="Describe your community"
+              style="width: 46vw"
+              @input=${(e: Event) => { descriptionValue = (e.target as HTMLInputElement).value; }}
+            />
           </div>
         </div>
       </div>
@@ -225,7 +230,6 @@ export const CommunityCreationPage = ({
           <p>(up to 5)</p>
         </div>
 
-        
         <div class="inputs">
             ${VALID_CATEGORIES.map(
                 category => html`
@@ -246,20 +250,20 @@ export const CommunityCreationPage = ({
         <div class="inputs">
           <div class="label">
             <h5>Visibility*</h5>
-            <select>
-              <option>Private</option>
-              <option>Public</option>
+            <select name="visibility" @change=${(e: Event) => { visibilityValue = (e.target as HTMLSelectElement).value; }}>
+              <option value="public">Public</option>
+              <option value="private">Private</option>
             </select>
           </div>
 
           <div class="label">
             <h5>Community Guidelines</h5>
             <div class="rules">
-              <label><input type="checkbox" /> Allow Profanity</label>
-              <label><input type="checkbox" /> 18+ Age Restriction</label>
-              <label><input type="checkbox" .checked=${true} /> Spam Protection</label>
-              <label><input type="checkbox" /> Allow Image Sending</label>
-              <label><input type="checkbox" /> Auto-Ban</label>
+              <label><input type="checkbox" @change=${(e: Event) => { rulesState.allowProfanity = (e.target as HTMLInputElement).checked; }} /> Allow Profanity</label>
+              <label><input type="checkbox" @change=${(e: Event) => { rulesState.ageRestricted = (e.target as HTMLInputElement).checked; }} /> 18+ Age Restriction</label>
+              <label><input type="checkbox" .checked=${true} @change=${(e: Event) => { rulesState.spamProtection = (e.target as HTMLInputElement).checked; }} /> Spam Protection</label>
+              <label><input type="checkbox" @change=${(e: Event) => { rulesState.allowImages = (e.target as HTMLInputElement).checked; }} /> Allow Image Sending</label>
+              <label><input type="checkbox" @change=${(e: Event) => { rulesState.autoBan = (e.target as HTMLInputElement).checked; }} /> Auto-Ban</label>
             </div>
           </div>
         </div>
@@ -274,8 +278,23 @@ export const CommunityCreationPage = ({
 
         <div class="inputs">
           <div class="label">
+            <h5>Color Scheme</h5>
+            <select name="colorScheme" @change=${(e: Event) => { colorSchemeValue = (e.target as HTMLSelectElement).value; }}>
+              <option value="default">Default</option>
+              <option value="dark">Dark</option>
+              <option value="ocean">Ocean</option>
+              <option value="forest">Forest</option>
+              <option value="sunset">Sunset</option>
+            </select>
+          </div>
+
+          <div class="label">
             <h5>Thumbnail</h5>
-            <input placeholder="Paste image URL" style="width: 30vw" />
+            <input
+              placeholder="Paste image URL"
+              style="width: 30vw"
+              @input=${(e: Event) => { thumbnailValue = (e.target as HTMLInputElement).value; }}
+            />
           </div>
         </div>
       </div>

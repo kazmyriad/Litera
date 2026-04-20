@@ -3,7 +3,20 @@ import { type CategoryType } from './constants';
 const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 
 function handleResponse(raw: string, res: Response) {
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw}`);
+  // Try to pull a structured error message out of the server's JSON so the
+  // UI can show something useful instead of "HTTP 500: {...}".
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`;
+    try {
+      const body = raw ? JSON.parse(raw) : null;
+      if (body && typeof body.error === 'string') message = body.error;
+    } catch {
+      /* non-JSON body — fall through with the generic message */
+    }
+    throw new Error(message);
+  }
+  // 204s and empty bodies are legal; don't explode trying to parse them.
+  if (!raw) return null;
   return JSON.parse(raw);
 }
 
@@ -44,14 +57,22 @@ export type Categories = CategoryType[];
 export type Community = {
   id: number;
   ownerId: number;
+  owner?: string; // owner's username — server includes this on GET
   name: string;
   description: string;
   categories: Categories;
   visibility: CommunityVisibility;
   rules: Rules;
-  //colorScheme?: string;
+  colorScheme?: string;
   thumbnailUrl?: string;
   createdAt: string;
+};
+
+export type Membership = {
+  id: number;
+  user_id: number;
+  community_id: number;
+  community_role: string;
 };
 
 const STORAGE_KEY = 'litera_user';
@@ -219,26 +240,114 @@ export async function getCommunityById(id: number): Promise<Community> {
   return handleResponse(raw, res);
 }
 
-export async function createCommunity(community: Omit<Community, 'id' | 'createdAt' | 'owner'>): Promise<Community> {
+export async function createCommunity(
+  community: Omit<Community, 'id' | 'createdAt' | 'owner'>
+): Promise<Community> {
   const user = getCurrentUser();
-  
+
   if (!user) {
     throw new Error('User must be logged in to create a community');
   }
 
+  // Send categories/rules as real JSON values, not pre-stringified strings.
+  // The server JSON.stringifies them once before writing to the TEXT columns.
   const res = await fetch(`${API_BASE}/api/communities`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name: community.name,
       description: community.description,
-      categories: JSON.stringify(community.categories),
+      categories: community.categories,
       visibility: community.visibility,
-      rules: JSON.stringify(community.rules),
-      //color_scheme: community.colorScheme || 'default',
+      rules: community.rules,
+      color_scheme: community.colorScheme || 'default',
       thumbnail_url: community.thumbnailUrl || null,
       owner_id: user.id,
     }),
+  });
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
+export type MembershipStatus = {
+  isMember: boolean;
+  role: string | null;
+};
+
+export async function getMembership(communityId: number): Promise<MembershipStatus> {
+  const user = getCurrentUser();
+  if (!user) return { isMember: false, role: null };
+
+  const res = await fetch(`${API_BASE}/api/communities/${communityId}/membership?user_id=${user.id}`);
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
+export async function leaveCommunity(communityId: number): Promise<{ success: boolean }> {
+  const user = getCurrentUser();
+  if (!user) throw new Error('User must be logged in to leave a community');
+
+  const res = await fetch(`${API_BASE}/api/communities/${communityId}/members`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: user.id }),
+  });
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
+export async function updateCommunity(
+  id: number,
+  data: Partial<Omit<Community, 'id' | 'createdAt' | 'owner'>>
+): Promise<Community> {
+  const user = getCurrentUser();
+  if (!user) throw new Error('User must be logged in to update a community');
+
+  const res = await fetch(`${API_BASE}/api/communities/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: data.name,
+      description: data.description,
+      categories: data.categories,
+      visibility: data.visibility,
+      rules: data.rules,
+      color_scheme: data.colorScheme || 'default',
+      thumbnail_url: data.thumbnailUrl || null,
+      requesting_user_id: user.id,
+    }),
+  });
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
+export async function deleteCommunity(id: number): Promise<{ success: boolean }> {
+  const user = getCurrentUser();
+  if (!user) throw new Error('User must be logged in to delete a community');
+
+  const res = await fetch(`${API_BASE}/api/communities/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requesting_user_id: user.id }),
+  });
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
+export async function joinCommunity(communityId: number): Promise<{
+  success: boolean;
+  alreadyMember?: boolean;
+  membership: Membership;
+}> {
+  const user = getCurrentUser();
+  if (!user) {
+    throw new Error('User must be logged in to join a community');
+  }
+
+  const res = await fetch(`${API_BASE}/api/communities/${communityId}/join`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: user.id }),
   });
   const raw = await res.text();
   return handleResponse(raw, res);

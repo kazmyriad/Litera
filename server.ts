@@ -1,15 +1,16 @@
 // This file handles routes to server-side
 
+import 'dotenv/config';
 import express, { request, response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getAuthParams, uploadBuffer} from './imagekit';
+import { getAuthParams, uploadBuffer } from './imagekit';
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcrypt';
 
 const app = express();
-app.use(cors({ origin: process.env.ALLOWED_ORIGIN ?? '*', credentials: true}));
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN ?? '*', credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 
 // Valid community categories - must match client schema
@@ -27,7 +28,7 @@ const VALID_CATEGORIES = [
   'romance',
   'sci-fi',
   'fiction',
-  'non-fiction'
+  'non-fiction',
 ];
 
 // database pool
@@ -35,6 +36,13 @@ const VALID_CATEGORIES = [
 // note: you must restart the server before running the front end
 // type npm run build:server, then type node dist-server/server.js to start the server
 // open a separate terminal and type npm run dev to start the front end
+//
+// Aiven MySQL requires TLS. We enable SSL whenever we're not pointing at
+// localhost (so `npm run dev` against a local MySQL still works without certs).
+const isRemoteDb =
+  !!process.env.DB_HOST &&
+  process.env.DB_HOST !== 'localhost' &&
+  process.env.DB_HOST !== '127.0.0.1';
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST ?? 'localhost',
@@ -44,18 +52,34 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME ?? 'litera',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  // Aiven presents a valid CA-signed cert; rejectUnauthorized:true is the safe default.
+  ssl: isRemoteDb ? { rejectUnauthorized: true } : undefined,
 });
+
+// Fail fast on startup if the DB is unreachable so Render logs point at the real problem
+// instead of each API route returning a mysterious 500.
+pool.getConnection()
+  .then((conn) => {
+    console.log(`[db] connected to ${process.env.DB_HOST}:${process.env.DB_PORT}`);
+    conn.release();
+  })
+  .catch((err) => {
+    console.error('[db] initial connection failed:', err);
+  });
 
 // helper
 async function getUserById(id: number) {
-  const [rows] = await pool.query('SELECT id, username, firstname, lastname, email, dob FROM users WHERE id = ?', [id]);
+  const [rows] = await pool.query(
+    'SELECT id, username, firstname, lastname, email, dob FROM users WHERE id = ?',
+    [id]
+  );
   return Array.isArray(rows) && rows.length ? rows[0] : null;
 }
 
 async function checkUniqueUsernameEmail(username?: string, email?: string, idToIgnore?: number) {
   const conditions: string[] = [];
-  const params: Array<string|number> = [];
+  const params: Array<string | number> = [];
 
   if (username) {
     conditions.push('username = ?');
@@ -149,32 +173,31 @@ app.put('/api/users/:id', async (req, res) => {
 
 // imagekit
 app.get('/api/imagekit/auth', (_req, res) => {
-    res.json(getAuthParams());
+  res.json(getAuthParams());
 });
 
 app.post('/api/imagekit/upload-base64', async (_req, res) => {
-    // body can be undefined if client sends no JSON, guard against that with ||
-    const { base64, fileName, folder } = (_req.body || {}) as { base64?: string; fileName?: string; folder?: string; };
-    if (!base64) return res.status(400).json({ error: 'base64 is required' });
+  // body can be undefined if client sends no JSON, guard against that with ||
+  const { base64, fileName, folder } = (_req.body || {}) as { base64?: string; fileName?: string; folder?: string };
+  if (!base64) return res.status(400).json({ error: 'base64 is required' });
 
-    const b64 = base64.includes(',') ? base64.split(',')[1] : base64;
-    const buffer = Buffer.from(b64, 'base64');
+  const b64 = base64.includes(',') ? base64.split(',')[1] : base64;
+  const buffer = Buffer.from(b64, 'base64');
 
-    try {
-        const result = await uploadBuffer(buffer, {fileName, folder});
-        res.status(201).json(result);
-    } catch (e) {
-        console.error('[IK] upload failed:', e);
-        res.status(500).json({ error: 'Upload failed' });
-    }
+  try {
+    const result = await uploadBuffer(buffer, { fileName, folder });
+    res.status(201).json(result);
+  } catch (e) {
+    console.error('[IK] upload failed:', e);
+    res.status(500).json({ error: 'Upload failed' });
+  }
 });
 
 const BCRYPT_ROUNDS = 12;
-//const isValid = await bcrypt.compare(inputPassword, user.password);
 
-//create user
+// create user
 app.post('/api/users', async (req, res) => {
-  const { username, email, firstname, lastname, dob, password} = req.body || {};
+  const { username, email, firstname, lastname, dob, password } = req.body || {};
 
   // basic validation
   if (!username || !USERNAME_REGEX.test(username)) {
@@ -220,7 +243,7 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-//login user
+// login user
 app.post('/api/auth/login', async (req, res) => {
   const { identifier, password } = req.body || {};
 
@@ -268,60 +291,50 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ----------- COMMUNITY ROUTES --------------
-async function createCommunity(name: string, description: string, ownerId: number, categories: string, visibility: string, rules: string, colorScheme: string, thumbnailUrl: string | null) {
-  if (typeof name !== 'string' || name.trim().length === 0) {
-    throw new Error('Community name is required');
-  }
-  if (typeof description !== 'string') {
-    throw new Error('Community description is required');
-  }
-  if (typeof ownerId !== 'number' || ownerId < 1) {
-    throw new Error('Valid ownerId is required');
-  }
-  const [result] = await pool.query<mysql.ResultSetHeader>(
-    `
-    INSERT INTO communities (name, description, owner_id, categories, visibility, rules, color_scheme, thumbnail_url)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `,
-    [name, description, ownerId, categories, visibility, rules, colorScheme, thumbnailUrl]
-  );
-  const newCommunityId = result.insertId;
+
+// Normalise a DB row into the shape the client expects. Keeps GET list and
+// GET /:id consistent so we don't have to chase mismatched fields later.
+function rowToCommunity(row: any) {
+  // `categories` / `rules` in the DB are TEXT columns storing JSON. Parse
+  // defensively so a legacy double-encoded value still renders instead of
+  // throwing and nuking the whole list.
+  const parseMaybeTwice = (value: string | null, fallback: any) => {
+    if (value == null || value === '') return fallback;
+    try {
+      let parsed = JSON.parse(value);
+      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+      return parsed;
+    } catch {
+      return fallback;
+    }
+  };
+
   return {
-    id: newCommunityId,
-    name,
-    description,
-    owner_id: ownerId,
-    categories,
-    visibility,
-    rules,
-    color_scheme: colorScheme,
-    thumbnail_url: thumbnailUrl,
-    created_at: new Date()
+    id: row.id,
+    ownerId: row.owner_id,
+    owner: row.owner ?? undefined,
+    name: row.name,
+    description: row.description,
+    categories: parseMaybeTwice(row.categories, []),
+    visibility: row.visibility,
+    rules: parseMaybeTwice(row.rules, {}),
+    colorScheme: row.color_scheme,
+    thumbnailUrl: row.thumbnail_url,
+    createdAt: row.created_at,
   };
 }
 
-app.get('/api/communities', async (req, res) => {
+app.get('/api/communities', async (_req, res) => {
   try {
     const [rows] = await pool.query(
       `
-      SELECT c.*, u.username as owner
+      SELECT c.*, u.username AS owner
       FROM communities c
       JOIN users u ON c.owner_id = u.id
       ORDER BY c.created_at DESC
       `
     );
-    const communities = Array.isArray(rows) ? rows.map((row: any) => ({
-      id: row.id,
-      owner: row.owner,
-      name: row.name,
-      description: row.description,
-      categories: JSON.parse(row.categories || '[]'),
-      visibility: row.visibility,
-      rules: JSON.parse(row.rules || '{}'),
-      colorScheme: row.color_scheme,
-      thumbnailUrl: row.thumbnail_url,
-      createdAt: row.created_at
-    })) : [];
+    const communities = Array.isArray(rows) ? rows.map(rowToCommunity) : [];
     res.json(communities);
   } catch (e) {
     console.error('fetch communities error', e);
@@ -329,26 +342,337 @@ app.get('/api/communities', async (req, res) => {
   }
 });
 
-app.post('/api/communities', async (req, res) => {
-  const { name, description, categories, visibility, rules, color_scheme, thumbnail_url, owner_id } = req.body || {};
-  if (!name || !description || !owner_id) {
-    return res.status(400).json({ error: 'name, description, owner_id required' });
+app.get('/api/communities/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    return res.status(400).json({ error: 'Invalid community id' });
   }
-  
-  // Validate categories
-  if (categories && Array.isArray(categories)) {
-    const invalidCategories = categories.filter((cat: any) => !VALID_CATEGORIES.includes(cat));
-    if (invalidCategories.length > 0) {
-      return res.status(400).json({ error: `Invalid categories: ${invalidCategories.join(', ')}` });
+
+  try {
+    const [rows] = await pool.query(
+      `
+      SELECT c.*, u.username AS owner
+      FROM communities c
+      JOIN users u ON c.owner_id = u.id
+      WHERE c.id = ?
+      LIMIT 1
+      `,
+      [id]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(404).json({ error: 'Community not found' });
+    }
+    res.json(rowToCommunity(rows[0]));
+  } catch (e) {
+    console.error('fetch community error', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/communities', async (req, res) => {
+  const body = req.body || {};
+  const name: unknown = body.name;
+  const description: unknown = body.description;
+  const ownerId = Number(body.owner_id);
+  const thumbnailUrl: string | null = body.thumbnail_url || null;
+  const colorScheme: string = body.color_scheme || 'default';
+
+  // --- Input validation ----------------------------------------------------
+  if (typeof name !== 'string' || name.trim().length === 0) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+  if (typeof description !== 'string') {
+    return res.status(400).json({ error: 'description is required' });
+  }
+  if (!Number.isInteger(ownerId) || ownerId < 1) {
+    return res.status(400).json({ error: 'valid owner_id is required' });
+  }
+
+  // Accept `categories` as either an array (correct) or a JSON string (legacy
+  // client behaviour). Normalise to a real array before validating.
+  let categories: string[] = [];
+  if (Array.isArray(body.categories)) {
+    categories = body.categories;
+  } else if (typeof body.categories === 'string' && body.categories.length > 0) {
+    try {
+      const parsed = JSON.parse(body.categories);
+      if (Array.isArray(parsed)) categories = parsed;
+    } catch {
+      return res.status(400).json({ error: 'categories must be an array' });
     }
   }
-  
+  const invalidCategories = categories.filter((cat) => !VALID_CATEGORIES.includes(cat));
+  if (invalidCategories.length > 0) {
+    return res.status(400).json({ error: `Invalid categories: ${invalidCategories.join(', ')}` });
+  }
+
+  // Same deal for `rules`: allow object or JSON-string.
+  let rules: Record<string, unknown> = {};
+  if (body.rules && typeof body.rules === 'object' && !Array.isArray(body.rules)) {
+    rules = body.rules;
+  } else if (typeof body.rules === 'string' && body.rules.length > 0) {
+    try {
+      const parsed = JSON.parse(body.rules);
+      if (parsed && typeof parsed === 'object') rules = parsed;
+    } catch {
+      return res.status(400).json({ error: 'rules must be an object' });
+    }
+  }
+
+  // DB ENUM is strictly lowercase 'public' | 'private'. The form sends
+  // capitalised values, so normalise before hitting the driver.
+  const visibility = typeof body.visibility === 'string' ? body.visibility.toLowerCase() : 'public';
+  if (visibility !== 'public' && visibility !== 'private') {
+    return res.status(400).json({ error: 'visibility must be public or private' });
+  }
+
   try {
-    const community = await createCommunity(name, description, owner_id, JSON.stringify(categories || []), visibility || 'public', JSON.stringify(rules || {}), color_scheme || 'default', thumbnail_url || null);
-    res.status(201).json(community);
+    // Confirm the owner exists so we return a clean 400 instead of a FK 500.
+    const owner = await getUserById(ownerId);
+    if (!owner) {
+      return res.status(400).json({ error: 'owner_id does not exist' });
+    }
+
+    const [result] = await pool.query<mysql.ResultSetHeader>(
+      `
+      INSERT INTO communities
+        (name, description, owner_id, categories, visibility, rules, color_scheme, thumbnail_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        name.trim(),
+        description,
+        ownerId,
+        JSON.stringify(categories),
+        visibility,
+        JSON.stringify(rules),
+        colorScheme,
+        thumbnailUrl,
+      ]
+    );
+
+    // Auto-add the owner to community_members as an admin so they appear in
+    // their own member list immediately.
+    await pool.query(
+      `INSERT INTO community_members (user_id, community_id, community_role) VALUES (?, ?, 'admin')`,
+      [ownerId, result.insertId]
+    );
+
+    // Read back through the shared projection so the response shape matches GET.
+    const [rows] = await pool.query(
+      `
+      SELECT c.*, u.username AS owner
+      FROM communities c
+      JOIN users u ON c.owner_id = u.id
+      WHERE c.id = ?
+      LIMIT 1
+      `,
+      [result.insertId]
+    );
+    const created = Array.isArray(rows) && rows.length ? rowToCommunity(rows[0]) : null;
+    res.status(201).json(created);
   } catch (e) {
     console.error('create community error', e);
     res.status(500).json({ error: e instanceof Error ? e.message : 'Server error' });
+  }
+});
+
+// Join a community. Client posts { user_id }.
+app.post('/api/communities/:id/join', async (req, res) => {
+  const communityId = Number(req.params.id);
+  const userId = Number((req.body || {}).user_id);
+
+  if (!Number.isInteger(communityId) || communityId < 1) {
+    return res.status(400).json({ error: 'Invalid community id' });
+  }
+  if (!Number.isInteger(userId) || userId < 1) {
+    return res.status(400).json({ error: 'valid user_id is required' });
+  }
+
+  try {
+    // Verify both community and user exist first — otherwise the FK violation
+    // comes back as a generic 500 which is hard to debug from the UI.
+    const [communityRows] = await pool.query(
+      'SELECT id FROM communities WHERE id = ? LIMIT 1',
+      [communityId]
+    );
+    if (!Array.isArray(communityRows) || communityRows.length === 0) {
+      return res.status(404).json({ error: 'Community not found' });
+    }
+    const user = await getUserById(userId);
+    if (!user) {
+      return res.status(400).json({ error: 'user_id does not exist' });
+    }
+
+    // Idempotent: if the user is already a member, short-circuit.
+    const [existing] = await pool.query(
+      'SELECT id, community_role FROM community_members WHERE user_id = ? AND community_id = ? LIMIT 1',
+      [userId, communityId]
+    );
+    if (Array.isArray(existing) && existing.length > 0) {
+      return res.json({ success: true, alreadyMember: true, membership: existing[0] });
+    }
+
+    const [result] = await pool.query<mysql.ResultSetHeader>(
+      `INSERT INTO community_members (user_id, community_id, community_role) VALUES (?, ?, 'member')`,
+      [userId, communityId]
+    );
+    res.status(201).json({
+      success: true,
+      membership: {
+        id: result.insertId,
+        user_id: userId,
+        community_id: communityId,
+        community_role: 'member',
+      },
+    });
+  } catch (e) {
+    console.error('join community error', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Check a single user's membership in a community.
+app.get('/api/communities/:id/membership', async (req, res) => {
+  const communityId = Number(req.params.id);
+  const userId = Number(req.query.user_id);
+
+  if (!Number.isInteger(communityId) || communityId < 1) {
+    return res.status(400).json({ error: 'Invalid community id' });
+  }
+  if (!Number.isInteger(userId) || userId < 1) {
+    return res.json({ isMember: false, role: null });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      'SELECT community_role FROM community_members WHERE user_id = ? AND community_id = ? LIMIT 1',
+      [userId, communityId]
+    );
+    if (Array.isArray(rows) && rows.length > 0) {
+      res.json({ isMember: true, role: (rows[0] as any).community_role });
+    } else {
+      res.json({ isMember: false, role: null });
+    }
+  } catch (e) {
+    console.error('membership check error', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Leave a community. Client sends { user_id } in body.
+app.delete('/api/communities/:id/members', async (req, res) => {
+  const communityId = Number(req.params.id);
+  const userId = Number((req.body || {}).user_id);
+
+  if (!Number.isInteger(communityId) || communityId < 1) {
+    return res.status(400).json({ error: 'Invalid community id' });
+  }
+  if (!Number.isInteger(userId) || userId < 1) {
+    return res.status(400).json({ error: 'valid user_id is required' });
+  }
+
+  try {
+    const [result] = await pool.query<mysql.ResultSetHeader>(
+      'DELETE FROM community_members WHERE user_id = ? AND community_id = ?',
+      [userId, communityId]
+    );
+    res.json({ success: true, removed: result.affectedRows > 0 });
+  } catch (e) {
+    console.error('leave community error', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update a community. Only the owner may do this.
+app.put('/api/communities/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    return res.status(400).json({ error: 'Invalid community id' });
+  }
+
+  const body = req.body || {};
+  const requestingUserId = Number(body.requesting_user_id);
+  if (!Number.isInteger(requestingUserId) || requestingUserId < 1) {
+    return res.status(400).json({ error: 'valid requesting_user_id is required' });
+  }
+
+  const name = typeof body.name === 'string' ? body.name.trim() : null;
+  if (!name) return res.status(400).json({ error: 'name is required' });
+
+  const visibility = typeof body.visibility === 'string' ? body.visibility.toLowerCase() : 'public';
+  if (visibility !== 'public' && visibility !== 'private') {
+    return res.status(400).json({ error: 'visibility must be public or private' });
+  }
+
+  let categories: string[] = Array.isArray(body.categories) ? body.categories : [];
+  let rules: Record<string, unknown> = (body.rules && typeof body.rules === 'object' && !Array.isArray(body.rules))
+    ? body.rules : {};
+
+  const colorScheme: string = body.color_scheme || 'default';
+  const thumbnailUrl: string | null = body.thumbnail_url || null;
+  const description: string = typeof body.description === 'string' ? body.description : '';
+
+  try {
+    const [communityRows] = await pool.query(
+      'SELECT owner_id FROM communities WHERE id = ? LIMIT 1',
+      [id]
+    );
+    if (!Array.isArray(communityRows) || communityRows.length === 0) {
+      return res.status(404).json({ error: 'Community not found' });
+    }
+    if ((communityRows[0] as any).owner_id !== requestingUserId) {
+      return res.status(403).json({ error: 'Only the owner can edit this community' });
+    }
+
+    await pool.query(
+      `UPDATE communities
+       SET name = ?, description = ?, visibility = ?, categories = ?, rules = ?, color_scheme = ?, thumbnail_url = ?
+       WHERE id = ?`,
+      [name, description, visibility, JSON.stringify(categories), JSON.stringify(rules), colorScheme, thumbnailUrl, id]
+    );
+
+    const [rows] = await pool.query(
+      `SELECT c.*, u.username AS owner FROM communities c JOIN users u ON c.owner_id = u.id WHERE c.id = ? LIMIT 1`,
+      [id]
+    );
+    res.json(Array.isArray(rows) && rows.length ? rowToCommunity(rows[0]) : null);
+  } catch (e) {
+    console.error('update community error', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete a community. Only the owner may do this.
+app.delete('/api/communities/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    return res.status(400).json({ error: 'Invalid community id' });
+  }
+
+  const requestingUserId = Number((req.body || {}).requesting_user_id);
+  if (!Number.isInteger(requestingUserId) || requestingUserId < 1) {
+    return res.status(400).json({ error: 'valid requesting_user_id is required' });
+  }
+
+  try {
+    const [communityRows] = await pool.query(
+      'SELECT owner_id FROM communities WHERE id = ? LIMIT 1',
+      [id]
+    );
+    if (!Array.isArray(communityRows) || communityRows.length === 0) {
+      return res.status(404).json({ error: 'Community not found' });
+    }
+    if ((communityRows[0] as any).owner_id !== requestingUserId) {
+      return res.status(403).json({ error: 'Only the owner can delete this community' });
+    }
+
+    await pool.query('DELETE FROM community_members WHERE community_id = ?', [id]);
+    await pool.query('DELETE FROM communities WHERE id = ?', [id]);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('delete community error', e);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -361,9 +685,9 @@ app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(distDir, 'index.html'));
 });
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== 'test') {
   app.listen(process.env.PORT || 3002, () => {
-    console.log(`ImageKit auth server listening on ${process.env.PORT || 3002}`);
+    console.log(`Server listening on ${process.env.PORT || 3002}`);
   });
 }
 

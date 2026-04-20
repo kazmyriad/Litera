@@ -8,7 +8,7 @@ import ProfilePage from "./pages/Profile.js";
 import LoginPage from "./pages/Login.js";
 import ProfileEditPage from "./pages/ProfileEdit.js";
 import CommunityCreationPage from "./pages/CommunityCreation.js";
-import CommunityDetailPage from "./pages/CommunityDetail.js";
+import './pages/CommunityDetail.js';
 import './components/NavBar.jsx';
 import './components/AuthOverlay.js';
 import { isLoggedIn } from './Services.js';
@@ -78,8 +78,10 @@ export class App extends LitElement {
                 return HomePage({currentPath: this.currentPath});
             case basePath.startsWith('/create-community'):
                 return CommunityCreationPage({currentPath: this.currentPath});
-            case basePath.startsWith('/community-detail'): //this will have to have its own special replacement hash thing
-                return CommunityDetailPage({currentPath: this.currentPath});
+            case basePath.startsWith('/community-detail'): {
+                const communityId = Number(basePath.split('/community-detail/')[1]) || 0;
+                return html`<community-detail-page .communityId=${communityId}></community-detail-page>`;
+            }
             case basePath.startsWith('/communities'):
                 return html`<communities-page></communities-page>`;
             case basePath.startsWith('/libraries'):
