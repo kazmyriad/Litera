@@ -29,19 +29,17 @@ class SearchBar extends LitElement {
     #content {
         display: flex;
         background-color: var(--color-3);
-        border: 1px solid var(--color-2);
         border-radius: 50px;
-        padding: 10px 48px;
+        padding: 1em;
+        width: 30em;
         align-items: center;
         justify-content: space-between;
     }
 
     .search-input {
-        flex: 1;
         border: none;
         background: transparent;
         text-align: center;
-        font-style: italic;
     }
 
     .search-input:focus {
@@ -49,18 +47,21 @@ class SearchBar extends LitElement {
     }
 
     #left {
-        display: flex;
+      display: flex;
         width: 100%;
+        flex-grow: 3;
+        justify-content: flex-start;
     }
 
     #right button {
         position: relative;
         background-color: transparent;
         border: none;
+        color: var(--color-4);
     }
     #right button:hover {
         cursor: pointer;
-        color: #666;
+        color: var(--color-5);
     }
 
     #dropdown {
@@ -115,6 +116,25 @@ class SearchBar extends LitElement {
 
     .active {
         font-weight: bold;
+    }
+
+    img{
+      float: left;
+      margin-right:2em;
+      width:2em;
+    }
+
+    input{
+      field-sizing: content;
+      /* this only works on the latest chromium browsers though */
+      text-align: left;
+      font-size: 1em;
+      font-style: normal;
+    }
+
+    input::placeholder{
+      font-style: italic;
+      color: var(--color-2);
     }
   `;
 
