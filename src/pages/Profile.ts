@@ -3,11 +3,11 @@
 import { html, css, type TemplateResult } from "lit";
 import { until } from 'lit/directives/until.js';
 import  {fetchUserById} from '../Services';
-import '../components/CommunityCard.js';
-import '../components/CommunityContainer.js';
+import '../components/CommunityCard.jsx';
+import '../components/CommunityContainer.jsx';
 import '../components/BookCard.jsx';
-import '../components/Breadcrumb.js';
-import '../components/ProfileTag.js';
+import '../components/Breadcrumb.jsx';
+import '../components/ProfileTag.jsx';
 import EditIcon from '../images/Edit.svg';
 import { getCurrentUser } from "../Services";
 

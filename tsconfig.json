@@ -16,7 +16,7 @@
     "forceConsistentCasingInFileNames": true
     
   },
-  "include": ["src/**/*.ts", "vite.config.*", "src/components/NavBar.js", "src/App.tsx"],
+  "include": ["src/**/*.ts", "vite.config.*", "src/components/NavBar.jsx", "src/App.tsx"],
   "exclude": ["dist", "server.ts", "imagekit.ts", "dist-server", "node_modules"]
 }
 

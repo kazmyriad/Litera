@@ -3,10 +3,10 @@
 import { html, css, type TemplateResult } from "lit";
 import { until } from 'lit/directives/until.js';
 import { fetchUserById, updateUserInformation, checkUniqueUsernameEmail } from '../Services';
-import '../components/CommunityCard.js';
-import '../components/CommunityContainer.js';
+import '../components/CommunityCard.jsx';
+import '../components/CommunityContainer.jsx';
 import '../components/AppAlert';
-import '../components/successAnimation.js';
+import '../components/successAnimation.jsx';
 import { getCurrentUser } from "../Services";
 
 type AlertType = 'success' | 'error' | 'info' | 'warning';

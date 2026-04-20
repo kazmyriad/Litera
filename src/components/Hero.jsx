@@ -1,6 +1,6 @@
 // This file defines and styles the NavBar element
 import { html, css, LitElement } from "lit";
-import '../components/LoginButton.js';
+import './LoginButton.jsx';
 
 
 class TitleHero extends LitElement {

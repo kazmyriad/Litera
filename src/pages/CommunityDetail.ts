@@ -1,10 +1,10 @@
 //this is where we would write the frontend for communities
 // ---- would also need to use sql-related variables to load in communities (likely through a map)
 import { html, css, type TemplateResult } from "lit";
-import '../components/SearchBar.js';
-import '../components/CommunityCard.js';
-import '../components/CommunityContainer.js';
-import '../components/JoinButton.js';
+import '../components/SearchBar.jsx';
+import '../components/CommunityCard.jsx';
+import '../components/CommunityContainer.jsx';
+import '../components/JoinButton.jsx';
 
 interface ComProps {
     currentPath?: string;

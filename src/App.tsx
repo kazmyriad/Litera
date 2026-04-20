@@ -9,7 +9,7 @@ import LoginPage from "./pages/Login.js";
 import ProfileEditPage from "./pages/ProfileEdit.js";
 import CommunityCreationPage from "./pages/CommunityCreation.js";
 import CommunityDetailPage from "./pages/CommunityDetail.js";
-import './components/NavBar.js';
+import './components/NavBar.jsx';
 import './components/AuthOverlay.js';
 import { isLoggedIn } from './Services.js';
 import { restoreAuth } from './Services.js'; 

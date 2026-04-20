@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import '../components/CommunityCard.js';
+import './CommunityCard.jsx';
 import { communityService} from '../Services.ts';
 
 class CommunityContainer extends LitElement {

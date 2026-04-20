@@ -1,7 +1,7 @@
 import { html, css, type TemplateResult } from 'lit';
 import '../components/PillButton.js';
 import { communityService } from '../Services.js';
-import '../components/successAnimation.js';
+import '../components/successAnimation.jsx';
 import type { PillButton } from '../components/PillButton.ts';
 
 interface ComProps {

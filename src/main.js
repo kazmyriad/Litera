@@ -2,12 +2,12 @@
 // This simplifies the reference point to a single file reference in index.html
 import './App.tsx';
 // components
-import './components/NavBar.js';
-import './components/AppFooter.js';
-import './components/Hero.js';
-import './components/CommunityCard.js';
-import './components/BookCard.js';
-import './components/successAnimation.js';
+import './components/NavBar.jsx';
+import './components/AppFooter.jsx';
+import './components/Hero.jsx';
+import './components/CommunityCard.jsx';
+import './components/BookCard.jsx';
+import './components/successAnimation.jsx';
 
 //pages
 import './pages/Home.ts';

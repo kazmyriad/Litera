@@ -1,10 +1,10 @@
 // this is where we would write the frontend for the libraries section
 // ---- would need to fetch book database + linked to specific user account 
 import { html, css, type TemplateResult } from "lit";
-import '../components/SearchBar.js';
-import '../components/CommunityContainer.js';
+import '../components/SearchBar.jsx';
+import '../components/CommunityContainer.jsx';
 import '../components/BookCard.jsx';
-import '../components/Breadcrumb.js';
+import '../components/Breadcrumb.jsx';
 import { getCurrentUser } from "../Services.js";
 
 interface LibProps {

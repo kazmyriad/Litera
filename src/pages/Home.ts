@@ -1,7 +1,7 @@
 //this is where we would write the frontend for Home
 import { html, css, type TemplateResult } from "lit";
-import '../components/Hero.js';
-import '../components/successAnimation.js';
+import '../components/Hero.jsx';
+import '../components/successAnimation.jsx';
 import { getCurrentUser } from "../Services.js";
 
 interface HomeProps {

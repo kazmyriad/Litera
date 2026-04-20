@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import './successAnimation.js';
+import './successAnimation.jsx';
 import { setCurrentUser, createUser, loginUser } from '../Services.js';
 
 interface PasswordChecks {
