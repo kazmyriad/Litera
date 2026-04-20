@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import './successAnimation.jsx';
+import './successAnimation.jsx'; 
 import { setCurrentUser, createUser, loginUser } from '../Services.js';
 
 interface PasswordChecks {
@@ -116,6 +116,32 @@ export class AuthOverlay extends LitElement {
       color: var(--color-3);
       transition: 0.3s ease;
       width: 100%;
+    }
+
+    button.exit {
+      width: 1em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--color-3);
+      color: var(--color-2);
+      height: 1em;
+      padding: 1em;
+      font-size: 1em;
+      float: right;
+      transition: 0.3s ease;
+
+    }
+
+    button.exit:hover{
+      color: var(--color-1);
+      background-color: var(--color-2);
+      transition: 0.3s ease;
+    }
+
+    img{
+      width: 2em;
+      transform: rotate(180deg);
     }
 
 
@@ -234,6 +260,7 @@ export class AuthOverlay extends LitElement {
   private renderForm() {
     if (this.mode === 'login') {
       return html`
+        <button class="exit" @click=${this.close}>x</button>
         <h2>Login</h2>
         <form @submit=${this.handleLogin}>
           <input
@@ -255,6 +282,7 @@ export class AuthOverlay extends LitElement {
     }
 
     return html`
+      <button class="exit" @click=${this.close}>x</button>
       <h2>Create Account</h2>
       <form @submit=${this.handleSubmit}>
         <label class="required">Name</label>
