@@ -165,7 +165,7 @@ export const CommunityCreationPage = ({
         await createCommunity({
             name,
             description,
-            categories,
+            //categories,
             visibility: visibility as 'public' | 'private',
             //rules,
             //colorScheme: 'default',

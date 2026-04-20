@@ -42,7 +42,7 @@ export type Community = {
   ownerId: number;
   name: string;
   description: string;
-  categories: string[];
+  //categories: string[];
   visibility: CommunityVisibility;
   //rules: CommunityRules;
   //colorScheme?: string;
