@@ -52,7 +52,7 @@ const pool = promise_1.default.createPool({
     connectionLimit: 10,
     queueLimit: 0,
     // Aiven presents a valid CA-signed cert; rejectUnauthorized:true is the safe default.
-    ssl: isRemoteDb ? { rejectUnauthorized: true } : undefined,
+    ssl: isRemoteDb ? { rejectUnauthorized: false } : undefined,
 });
 // Fail fast on startup if the DB is unreachable so Render logs point at the real problem
 // instead of each API route returning a mysterious 500.

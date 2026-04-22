@@ -37,7 +37,7 @@ export class CommunitiesPage extends LitElement {
         const user = getCurrentUser();
         const isAuthenticated = !!user;
 
-        const popularCommunities = this.communities.slice(0, 3); // first 3 as popular
+        const popularCommunities = this.communities.filter(c => c.visibility === 'public').slice(0, 3); // first 3 as popular
         const myCommunities = isAuthenticated ? this.communities.filter(c => c.ownerId === user.id) : [];
 
         const styles = css`

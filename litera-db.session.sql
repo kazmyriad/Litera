@@ -1,3 +1,2 @@
-UPDATE litera.communities
-SET thumbnail_url = 'https://www.baltimoremagazine.com/wp-content/uploads/2026/02/wuthering-heights-header-1-1200x675.jpg'
-WHERE id = 1;
+ALTER TABLE litera.communities ADD COLUMN visibility VARCHAR(20) DEFAULT 'public';
+UPDATE litera.communities SET visibility = 'public' WHERE id = 1;
