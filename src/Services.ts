@@ -226,6 +226,31 @@ export class LibraryManager {
   }
 }
 
+export type BookRecord = {
+  id: number;
+  isbn13: string;
+  title: string;
+  subtitle: string | null;
+  authors: string;
+  categories: string | null;
+  thumbnail: string | null;
+  description: string | null;
+  published_year: number | null;
+  average_rating: number | null;
+};
+
+export async function fetchBooks(): Promise<BookRecord[]> {
+  const res = await fetch(`${API_BASE}/api/books`);
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
+export async function fetchBookById(id: number): Promise<BookRecord> {
+  const res = await fetch(`${API_BASE}/api/books/${id}`);
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
 // Community based functions
 
 export async function fetchCommunities(): Promise<Community[]> {

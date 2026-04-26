@@ -29,7 +29,7 @@ export class CommunitiesPage extends LitElement {
     private renderCommunityCard(community: Community): TemplateResult {
         return html`
           <div style="cursor:pointer" @click=${() => { window.location.hash = `#/community-detail/${community.id}`; }}>
-            <community-card name="${community.name}" description="${community.description}"></community-card>
+            <community-card name="${community.name}" description="${community.description}" thumbnail="${community.thumbnailUrl || 'https://placehold.co/200x200'}"></community-card>
           </div>`;
     }
 
@@ -37,7 +37,7 @@ export class CommunitiesPage extends LitElement {
         const user = getCurrentUser();
         const isAuthenticated = !!user;
 
-        const popularCommunities = this.communities.slice(0, 3); // first 3 as popular
+        const popularCommunities = this.communities.filter(c => c.visibility === 'public').slice(0, 3); // first 3 as popular
         const myCommunities = isAuthenticated ? this.communities.filter(c => c.ownerId === user.id) : [];
 
         const styles = css`
@@ -60,6 +60,30 @@ export class CommunitiesPage extends LitElement {
                 margin: 24px;
                 gap: 24px;
             }
+
+            .add-community-btn {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: var(--color-5);
+                color: white;
+                display: grid;
+                place-items: center;
+                line-height: 0px;
+                align-items: center;
+                justify-content: center;
+                align-self: center;
+                border: none;
+                cursor: pointer;
+                opacity: 0.7;
+                transition: opacity 0.2s ease, transform 0.2s ease;
+            }
+
+            .add-community-btn:hover {
+                opacity: 1;
+                transform: scale(1.04);
+            }
+
         `;
 
         if (this.loading) {
@@ -87,9 +111,13 @@ export class CommunitiesPage extends LitElement {
                 ${isAuthenticated ? html`
                     <div class="my-communities">
                         <h3>My Communities</h3>
-                        <button @click=${() => window.location.hash = '#/create-community'}>New Community</button>
                         <community-container>
                             ${myCommunities.map(c => this.renderCommunityCard(c))}
+                            <button
+                                class="add-community-btn"
+                                @click=${() => window.location.hash = '#/create-community'}
+                                tooltip="Create a new community"
+                            ><h4>+</h4></button>
                         </community-container>
                     </div>
                 ` : null

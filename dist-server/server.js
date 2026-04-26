@@ -52,7 +52,7 @@ const pool = promise_1.default.createPool({
     connectionLimit: 10,
     queueLimit: 0,
     // Aiven presents a valid CA-signed cert; rejectUnauthorized:true is the safe default.
-    ssl: isRemoteDb ? { rejectUnauthorized: true } : undefined,
+    ssl: isRemoteDb ? { rejectUnauthorized: false } : undefined,
 });
 // Fail fast on startup if the DB is unreachable so Render logs point at the real problem
 // instead of each API route returning a mysterious 500.
@@ -570,6 +570,34 @@ app.delete('/api/communities/:id', async (req, res) => {
     }
     catch (e) {
         console.error('delete community error', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+// ----------- BOOK ROUTES --------------
+app.get('/api/books', async (_req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT * FROM books ORDER BY average_rating DESC');
+        res.json(Array.isArray(rows) ? rows : []);
+    }
+    catch (e) {
+        console.error('fetch books error', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+app.get('/api/books/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) {
+        return res.status(400).json({ error: 'Invalid book id' });
+    }
+    try {
+        const [rows] = await pool.query('SELECT * FROM books WHERE id = ? LIMIT 1', [id]);
+        if (!Array.isArray(rows) || rows.length === 0) {
+            return res.status(404).json({ error: 'Book not found' });
+        }
+        res.json(rows[0]);
+    }
+    catch (e) {
+        console.error('fetch book error', e);
         res.status(500).json({ error: 'Server error' });
     }
 });

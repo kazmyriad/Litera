@@ -35,7 +35,6 @@ class CommunityCard extends LitElement {
             }
             .top {
                 position: relative;
-                background-image: url("https://images.pexels.com/photos/1172018/pexels-photo-1172018.jpeg");
                 background-size: cover;
                 background-position: center;
                 justify-content: flex-end;
@@ -93,7 +92,7 @@ class CommunityCard extends LitElement {
     render(){
         return html`
         <div class="container">
-            <div class="top">
+            <div class="top" style="background-image: url('${this.thumbnail}')">
                 <button class="info-button" @click=${() => window.location.hash = '/community-detail'}>
                     <img src="${PointArrow}" alt="Info">
                 </button>

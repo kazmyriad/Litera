@@ -676,6 +676,35 @@ app.delete('/api/communities/:id', async (req, res) => {
   }
 });
 
+// ----------- BOOK ROUTES --------------
+
+app.get('/api/books', async (_req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM books ORDER BY average_rating DESC');
+    res.json(Array.isArray(rows) ? rows : []);
+  } catch (e) {
+    console.error('fetch books error', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/books/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    return res.status(400).json({ error: 'Invalid book id' });
+  }
+  try {
+    const [rows] = await pool.query('SELECT * FROM books WHERE id = ? LIMIT 1', [id]);
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+    res.json(rows[0]);
+  } catch (e) {
+    console.error('fetch book error', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // serve Vite build (connect to client)
 const distDir = path.join(process.cwd(), 'dist'); // Vite default outDir is "dist"
 app.use(express.static(distDir));
