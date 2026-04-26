@@ -49,7 +49,7 @@ export class CommunitiesPage extends LitElement {
                 margin: 24px;
                 text-align: center;
                 color: white;
-                width: fit-content;
+                width: 100%;
                 justify-self: center;
             }
 
