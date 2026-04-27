@@ -11,9 +11,33 @@ const path_1 = __importDefault(require("path"));
 const imagekit_1 = require("./imagekit");
 const promise_1 = __importDefault(require("mysql2/promise"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const multer_1 = __importDefault(require("multer"));
+const fs_1 = __importDefault(require("fs"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: process.env.ALLOWED_ORIGIN ?? '*', credentials: true }));
 app.use(express_1.default.json({ limit: '10mb' }));
+// ----------- FILE UPLOAD SETUP -----------
+const uploadsDir = path_1.default.join(process.cwd(), 'uploads');
+if (!fs_1.default.existsSync(uploadsDir))
+    fs_1.default.mkdirSync(uploadsDir, { recursive: true });
+const ALLOWED_IMAGE_MIME = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const upload = (0, multer_1.default)({
+    storage: multer_1.default.diskStorage({
+        destination: (_req, _file, cb) => cb(null, uploadsDir),
+        filename: (_req, file, cb) => {
+            const ext = path_1.default.extname(file.originalname).toLowerCase();
+            cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+        },
+    }),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+        if (ALLOWED_IMAGE_MIME.includes(file.mimetype))
+            cb(null, true);
+        else
+            cb(new Error('Only image files (jpg, png, gif, webp) are allowed'));
+    },
+});
+app.use('/uploads', express_1.default.static(uploadsDir));
 // Valid community categories - must match client schema
 const VALID_CATEGORIES = [
     'fantasy',
@@ -151,6 +175,13 @@ app.put('/api/users/:id', async (req, res) => {
         console.error('update profile error', e);
         res.status(500).json({ error: 'Server error' });
     }
+});
+// local file upload — saves to /uploads and returns a relative URL
+app.post('/api/upload', upload.single('image'), (req, res) => {
+    if (!req.file)
+        return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/uploads/${req.file.filename}`;
+    res.status(201).json({ url, filename: req.file.filename });
 });
 // imagekit
 app.get('/api/imagekit/auth', (_req, res) => {
@@ -604,7 +635,7 @@ app.get('/api/books/:id', async (req, res) => {
 // serve Vite build (connect to client)
 const distDir = path_1.default.join(process.cwd(), 'dist'); // Vite default outDir is "dist"
 app.use(express_1.default.static(distDir));
-app.get(/^\/(?!api).*/, (req, res) => {
+app.get(/^\/(?!api|uploads).*/, (req, res) => {
     if (req.path.startsWith('/api'))
         return res.status(404).json({ error: 'Not found' });
     res.sendFile(path_1.default.join(distDir, 'index.html'));

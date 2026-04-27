@@ -8,10 +8,34 @@ import { fileURLToPath } from 'url';
 import { getAuthParams, uploadBuffer } from './imagekit';
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcrypt';
+import multer from 'multer';
+import fs from 'fs';
 
 const app = express();
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN ?? '*', credentials: true }));
 app.use(express.json({ limit: '10mb' }));
+
+// ----------- FILE UPLOAD SETUP -----------
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const ALLOWED_IMAGE_MIME = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_IMAGE_MIME.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only image files (jpg, png, gif, webp) are allowed'));
+  },
+});
+
+app.use('/uploads', express.static(uploadsDir));
 
 // Valid community categories - must match client schema
 const VALID_CATEGORIES = [
@@ -169,6 +193,13 @@ app.put('/api/users/:id', async (req, res) => {
     console.error('update profile error', e);
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+// local file upload — saves to /uploads and returns a relative URL
+app.post('/api/upload', upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const url = `/uploads/${req.file.filename}`;
+  res.status(201).json({ url, filename: req.file.filename });
 });
 
 // imagekit
@@ -709,7 +740,7 @@ app.get('/api/books/:id', async (req, res) => {
 const distDir = path.join(process.cwd(), 'dist'); // Vite default outDir is "dist"
 app.use(express.static(distDir));
 
-app.get(/^\/(?!api).*/, (req, res) => {
+app.get(/^\/(?!api|uploads).*/, (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not found' });
   res.sendFile(path.join(distDir, 'index.html'));
 });

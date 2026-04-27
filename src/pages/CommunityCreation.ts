@@ -1,5 +1,6 @@
 import { html, css, type TemplateResult } from 'lit';
 import '../components/PillButton.js';
+import '../components/ImagePicker.js';
 import { createCommunity, getCurrentUser, type Categories } from '../Services.js';
 import '../components/successAnimation.jsx';
 import type { PillButton } from '../components/PillButton.ts';
@@ -290,11 +291,10 @@ export const CommunityCreationPage = ({
 
           <div class="label">
             <h5>Thumbnail</h5>
-            <input
-              placeholder="Paste image URL"
-              style="width: 30vw"
-              @input=${(e: Event) => { thumbnailValue = (e.target as HTMLInputElement).value; }}
-            />
+            <image-picker
+              style="width: 30vw; display: block;"
+              @image-changed=${(e: CustomEvent) => { thumbnailValue = e.detail.value; }}
+            ></image-picker>
           </div>
         </div>
       </div>

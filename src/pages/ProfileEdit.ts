@@ -7,6 +7,7 @@ import '../components/CommunityCard.jsx';
 import '../components/CommunityContainer.jsx';
 import '../components/AppAlert';
 import '../components/successAnimation.jsx';
+import '../components/ImagePicker.js';
 import { getCurrentUser } from "../Services";
 
 type AlertType = 'success' | 'error' | 'info' | 'warning';
@@ -65,6 +66,11 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
 
     const formData: { username:string; firstname:string; lastname:string; dob:string; email:string } = {
       username: '', firstname: '', lastname: '', dob: '', email: ''
+    };
+
+    let profileImgUrl = '';
+    const onImageChanged = (e: CustomEvent) => {
+      profileImgUrl = e.detail.value;
     };
 
     const onInput = (field: keyof typeof formData, event: Event) => {
@@ -193,10 +199,8 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
         .lists {
             flex-direction: column;
         }
-        img#profileImg {
-            max-width: 100px;
-            height: 100px;
-            border-radius: 100%;
+        image-picker {
+            --color-4: #a9bb72;
         }
         #card button {
             background: #a9bb72;
@@ -216,7 +220,13 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
       <button @click=${() => window.location.hash = '/profile'}>&larr; Back</button>
       <div id="card">
         <div class="banner">
-          <img id="profileImg" src="https://t3.ftcdn.net/jpg/02/22/85/16/360_F_222851624_jfoMGbJxwRi5AWGdPgXKSABMnzCQo9RN.jpg" />
+          <div style="display:flex; flex-direction:column; gap:6px; align-items:center;">
+            <image-picker
+              value="https://t3.ftcdn.net/jpg/02/22/85/16/360_F_222851624_jfoMGbJxwRi5AWGdPgXKSABMnzCQo9RN.jpg"
+              style="width:160px; display:block;"
+              @image-changed=${onImageChanged}
+            ></image-picker>
+          </div>
           ${bannerTemplate}
         </div>
 
