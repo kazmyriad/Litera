@@ -10,8 +10,6 @@ import mysql from 'mysql2/promise';
 import bcrypt from 'bcrypt';
 import multer from 'multer';
 import fs from 'fs';
-import { google } from "googleapis";
-import crypto from "crypto";
 
 const app = express();
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN ?? '*', credentials: true }));
@@ -791,6 +789,31 @@ app.delete('/api/favorites', async (req, res) => {
   }
 });
 
+// google meet creation route
+
+app.post("/api/meet/create", async (req, res) => {
+  try {
+    const { title, startDateTime, endDateTime } = req.body || {};
+
+    res.json({
+      success: true,
+      eventId: "demo-event-123",
+      htmlLink: null,
+      meetLink: "https://meet.google.com/",
+      conferenceData: {
+        title,
+        startDateTime,
+        endDateTime,
+        mode: "temporary-demo",
+      },
+    });
+  } catch (error) {
+    console.error("temporary meet route error", error);
+    res.status(500).json({ error: "Failed to create demo meeting" });
+  }
+});
+
+
 // serve Vite build (connect to client)
 const distDir = path.join(process.cwd(), 'dist'); // Vite default outDir is "dist"
 app.use(express.static(distDir));
@@ -805,64 +828,6 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`Server listening on ${process.env.PORT || 3002}`);
   });
 }
-
-// google meet creation route
-
-app.post("/api/meet/create", async (req, res) => {
-  try {
-    const { title, description, startDateTime, endDateTime, attendeeEmails } = req.body;
-
-    const oAuth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
-    );
-
-    oAuth2Client.setCredentials({
-      access_token: req.session.googleAccessToken,
-      refresh_token: req.session.googleRefreshToken,
-    });
-
-    const calendar = google.calendar({ version: "v3", auth: oAuth2Client });
-
-    const event = {
-      summary: title,
-      description,
-      start: {
-        dateTime: startDateTime,
-        timeZone: "America/New_York",
-      },
-      end: {
-        dateTime: endDateTime,
-        timeZone: "America/New_York",
-      },
-      attendees: (attendeeEmails || []).map((email: string) => ({ email })),
-      conferenceData: {
-        createRequest: {
-          requestId: crypto.randomUUID(),
-          conferenceSolutionKey: { type: "hangoutsMeet" },
-        },
-      },
-    };
-
-    const response = await calendar.events.insert({
-      calendarId: "primary",
-      requestBody: event,
-      conferenceDataVersion: 1,
-      sendUpdates: "all",
-    });
-
-    res.json({
-      eventId: response.data.id,
-      htmlLink: response.data.htmlLink,
-      meetLink: response.data.hangoutLink,
-      conferenceData: response.data.conferenceData,
-    });
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to create Google Meet event" });
-  }
-});
 
 
 export default app;
