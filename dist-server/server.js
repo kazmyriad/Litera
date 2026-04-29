@@ -150,6 +150,26 @@ app.get('/api/users/check-unique', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+// search users by username — must be before /:id
+app.get('/api/users/search', async (req, res) => {
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    const exclude = Number(req.query.exclude) || 0;
+    if (!q)
+        return res.status(400).json({ error: 'q is required' });
+    try {
+        const [rows] = await pool.query(`SELECT id, username, avatar_url FROM users WHERE username LIKE ? AND id != ? LIMIT 10`, [`%${q}%`, exclude]);
+        const users = (Array.isArray(rows) ? rows : []).map(r => ({
+            id: r.id,
+            username: r.username,
+            avatarUrl: r.avatar_url ?? null,
+        }));
+        res.json(users);
+    }
+    catch (e) {
+        console.error('user search error', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 // search user by id
 app.get('/api/users/:id', async (req, res) => {
     const id = Number(req.params.id);

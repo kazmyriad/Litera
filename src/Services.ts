@@ -583,6 +583,20 @@ export async function getFriends(userId: number): Promise<FriendUser[]> {
   return handleResponse(raw, res) ?? [];
 }
 
+export type UserSearchResult = {
+  id: number;
+  username: string;
+  avatarUrl: string | null;
+};
+
+export async function searchUsers(query: string, excludeId?: number): Promise<UserSearchResult[]> {
+  const q = new URLSearchParams({ q: query });
+  if (excludeId) q.set('exclude', String(excludeId));
+  const res = await fetch(`${API_BASE}/api/users/search?${q}`);
+  const raw = await res.text();
+  return handleResponse(raw, res) ?? [];
+}
+
 export async function getPendingFriendRequests(userId: number): Promise<PendingFriendRequest[]> {
   const res = await fetch(`${API_BASE}/api/friends/pending?user_id=${userId}`);
   const raw = await res.text();

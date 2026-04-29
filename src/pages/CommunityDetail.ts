@@ -7,6 +7,7 @@ import '../components/CommunityContainer.jsx';
 import '../components/JoinButton.jsx';
 import '../components/successAnimation.jsx';
 import '../components/ForumThread.js';
+import '../components/AddMembersModal.js';
 import {
   getCommunityById,
   getMembership,
@@ -47,6 +48,7 @@ export class CommunityDetailPage extends LitElement {
   @state() private loading = true;
   @state() private editMode = false;
   @state() private showDeleteConfirm = false;
+  @state() private showAddMembersModal = false;
   @state() private communityBooks: CommunityBooks = { current: null, previous: [] };
   @state() private showBookPicker = false;
   @state() private allBooks: BookRecord[] = [];
@@ -858,7 +860,14 @@ export class CommunityDetailPage extends LitElement {
     const isAdmin = this.membership.role === 'admin' || user.id === this.community.ownerId;
     if (isAdmin) {
       return html`
-        <button class="action-btn btn-edit" @click=${this.openEdit.bind(this)}>Edit Community</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          ${this.community.visibility === 'private' ? html`
+            <button class="action-btn btn-edit" @click=${() => { this.showAddMembersModal = true; }}>
+              Add Members
+            </button>
+          ` : ''}
+          <button class="action-btn btn-edit" @click=${this.openEdit.bind(this)}>Edit Community</button>
+        </div>
       `;
     }
 
@@ -1043,6 +1052,15 @@ export class CommunityDetailPage extends LitElement {
     `;
   }
 
+  private renderAddMembersModal(): TemplateResult {
+    return html`
+      <add-members-modal 
+        .communityId=${this.communityId}
+        @done=${() => { this.showAddMembersModal = false; }}
+      ></add-members-modal>
+    `;
+  }
+
   render(): TemplateResult {
     if (this.loading) {
       return html`<div style="padding:48px;text-align:center;">Loading...</div>`;
@@ -1057,6 +1075,7 @@ export class CommunityDetailPage extends LitElement {
       <success-animation></success-animation>
       ${this.editMode ? this.renderEditModal() : null}
       ${this.showDeleteConfirm ? this.renderDeleteConfirm() : null}
+      ${this.showAddMembersModal ? this.renderAddMembersModal() : null}
       ${this.showBookPicker ? this.renderBookPickerModal() : null}
 
       <br>

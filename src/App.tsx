@@ -11,6 +11,7 @@ import CommunityCreationPage from "./pages/CommunityCreation.js";
 import './pages/CommunityDetail.js';
 import './components/NavBar.jsx';
 import './components/AuthOverlay.js';
+import './components/FriendsToast.js';
 import { isLoggedIn } from './Services.js';
 import { restoreAuth } from './Services.js'; 
 
@@ -112,6 +113,7 @@ export class App extends LitElement {
                 <app-footer></app-footer>
             </div>
             <auth-overlay></auth-overlay>
+            <friends-toast></friends-toast>
             
         `;
     }
