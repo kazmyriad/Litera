@@ -987,25 +987,7 @@ app.get('/api/books', async (_req, res) => {
   }
 });
 
-app.get('/api/books/:id', async (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id) || id < 1) {
-    return res.status(400).json({ error: 'Invalid book id' });
-  }
-  try {
-    const [rows] = await pool.query('SELECT * FROM books WHERE id = ? LIMIT 1', [id]);
-    if (!Array.isArray(rows) || rows.length === 0) {
-      return res.status(404).json({ error: 'Book not found' });
-    }
-    res.json(rows[0]);
-  } catch (e) {
-    console.error('fetch book error', e);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ----------- POPULAR BOOKS ROUTE --------------
-
+// Must be defined before /api/books/:id so Express doesn't treat "popular" as an id param
 app.get('/api/books/popular', async (_req, res) => {
   try {
     const [rows] = await pool.query(
@@ -1019,6 +1001,23 @@ app.get('/api/books/popular', async (_req, res) => {
     res.json(rows);
   } catch (e) {
     console.error('fetch popular books error', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/books/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    return res.status(400).json({ error: 'Invalid book id' });
+  }
+  try {
+    const [rows] = await pool.query('SELECT * FROM books WHERE id = ? LIMIT 1', [id]);
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+    res.json(rows[0]);
+  } catch (e) {
+    console.error('fetch book error', e);
     res.status(500).json({ error: 'Server error' });
   }
 });
