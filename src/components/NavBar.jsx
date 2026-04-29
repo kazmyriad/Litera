@@ -5,7 +5,7 @@ import BookCaseIcon from '../images/BookCase.svg';
 import HomeIcon from '../images/Home.svg';
 import CommunityIcon from '../images/Community.svg';
 import LibraryIcon from '../images/Library.svg';
-import { getCurrentUser, isLoggedIn, logout, getFriends } from '../Services';
+import { getCurrentUser, isLoggedIn, logout } from '../Services';
 
 const NAV_LINKS = [
     {name: 'home', path: '/', icon: HomeIcon},
@@ -35,8 +35,7 @@ class NavBar extends LitElement {
             currentPath: { type: String },
             onNavigate: { attribute: false},
             user: { attribute: false},
-            hoveredTab: { type: String },
-            friendsCount: { type: Number }
+            hoveredTab: { type: String }
         };
     }
 
@@ -47,7 +46,6 @@ class NavBar extends LitElement {
             window.location.hash = path;
         };
         this.user = getCurrentUser();
-        this.friendsCount = 0;
         this.hoveredTab = null;
     }
 
@@ -57,47 +55,8 @@ class NavBar extends LitElement {
         this._onAuthChanged = (e) => {
             this.user = e.detail.user;
             this.requestUpdate();
-            if (this.user) {
-                this.loadFriendCount();
-            }
         }
         window.addEventListener('auth-changed', this._onAuthChanged);
-        if (this.user) {
-            this.loadFriendCount();
-        }
-    }
-
-    async loadFriendCount() {
-        if (!this.user) return;
-        try {
-            const friends = await getFriends(this.user.id);
-            this.friendsCount = friends.length;
-        } catch (e) {
-            console.error('Failed to load friend count', e);
-        }
-    }
-
-    openFriendsToast() {
-        if (!isLoggedIn()) {
-            this.dispatchEvent(new CustomEvent('open-auth', {
-                bubbles: true,
-                composed: true,
-                detail: { mode: 'login' }
-            }));
-            return;
-        }
-        const toast = document.querySelector('friends-toast');
-        if (toast) {
-            if (this.user) {
-                toast.currentUserId = this.user.id;
-                getFriends(this.user.id).then(friends => {
-                    toast.friends = friends;
-                }).catch(e => {
-                    console.error('Failed to load friends', e);
-                });
-            }
-            toast.open = true;
-        }
     }
 
     disconnectedCallback() {
@@ -290,11 +249,6 @@ class NavBar extends LitElement {
                     <h2>Litera</h2>
                 </div>
                 <div id="right">
-                    ${this.user ? html`
-                        <button @click=${() => this.openFriendsToast()} style="display: flex; align-items: center; gap: 8px;">
-                            👥 ${this.friendsCount} friend${this.friendsCount !== 1 ? 's' : ''}
-                        </button>
-                    ` : ''}
                     ${NAV_LINKS
                     .map(
                         link =>

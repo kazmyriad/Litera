@@ -12,8 +12,8 @@ import {
     getCurrentUser, fetchUserById, fetchCommunities, fetchBooks,
     fetchFavorites, addFavorite, removeFavorite,
     getFriendshipStatus, sendFriendRequest, respondToFriendRequest, removeFriend,
-    getPendingFriendRequests,
-    type Community, type BookRecord, type FriendshipStatus, type PendingFriendRequest,
+    getPendingFriendRequests, getFriends,
+    type Community, type BookRecord, type FriendshipStatus, type PendingFriendRequest, type FriendUser,
 } from "../Services";
 
 @customElement('profile-page')
@@ -30,6 +30,8 @@ export class ProfilePage extends LitElement {
     @state() private friendActionLoading = false;
     @state() private pendingRequests: PendingFriendRequest[] = [];
     @state() private showUnfriendConfirm = false;
+    @state() private friends: FriendUser[] = [];
+    @state() private friendsCount: number = 0;
 
     connectedCallback(): void {
         super.connectedCallback();
@@ -81,8 +83,10 @@ export class ProfilePage extends LitElement {
             if (this.isOwnProfile && cur) {
                 try {
                     this.pendingRequests = await getPendingFriendRequests(cur.id);
+                    this.friends = await getFriends(cur.id);
+                    this.friendsCount = this.friends.length;
                 } catch (e) {
-                    console.error('Failed to load pending friend requests', e);
+                    console.error('Failed to load pending friend requests or friends', e);
                 }
             } else if (!this.isOwnProfile && cur) {
                 const info = await getFriendshipStatus(cur.id, targetId);
@@ -146,6 +150,17 @@ export class ProfilePage extends LitElement {
             this.pendingRequests = this.pendingRequests.filter(r => r.requestId !== requestId);
         } catch (e) {
             console.error('Failed to respond to friend request', e);
+        }
+    }
+
+    private openFriendsToast() {
+        const cur = getCurrentUser();
+        if (!cur) return;
+        const toast = document.querySelector('friends-toast') as any;
+        if (toast) {
+            toast.currentUserId = cur.id;
+            toast.friends = this.friends;
+            toast.open = true;
         }
     }
 
@@ -428,6 +443,14 @@ export class ProfilePage extends LitElement {
                         ` : ''}
                     </div>
                 </div>
+
+                ${this.isOwnProfile ? html`
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #eee; display: flex; gap: 20px;">
+                        <button style="background: transparent; border: none; color: var(--color-4); cursor: pointer; font-weight: 600; padding: 0;" @click=${this.openFriendsToast.bind(this)}>
+                            👥 ${this.friendsCount} friend${this.friendsCount !== 1 ? 's' : ''}
+                        </button>
+                    </div>
+                ` : ''}
 
                 ${this.isOwnProfile ? html`
                     <div class="personal-info">
