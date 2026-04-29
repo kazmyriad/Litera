@@ -88,6 +88,11 @@ export class ForumThreadElement extends LitElement {
     .post-author {
       font-weight: 700;
       font-size: 0.88rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .post-author:hover {
+      text-decoration: underline;
     }
 
     .post-time {
@@ -204,9 +209,10 @@ export class ForumThreadElement extends LitElement {
       <div class="post">
         <div class="post-header">
           ${p.avatar_url
-            ? html`<img class="post-avatar" src="${p.avatar_url}" alt="${p.username}" />`
+            ? html`<img class="post-avatar" src="${p.avatar_url}" alt="${p.username}" style="cursor:pointer"
+                @click=${() => { window.location.hash = `/user/${p.user_id}`; }} />`
             : html`<div class="post-avatar"></div>`}
-          <span class="post-author">@${p.username}</span>
+          <span class="post-author" @click=${() => { window.location.hash = `/user/${p.user_id}`; }}>@${p.username}</span>
           <span class="post-time">${date}</span>
         </div>
         <div class="post-content">${p.content}</div>

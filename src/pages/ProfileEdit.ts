@@ -9,6 +9,7 @@ import '../components/AppAlert';
 import '../components/successAnimation.jsx';
 import '../components/ImagePicker.js';
 import { getCurrentUser } from "../Services";
+import { VALID_CATEGORIES, formatCategoryName } from '../constants';
 
 type AlertType = 'success' | 'error' | 'info' | 'warning';
 
@@ -45,8 +46,6 @@ interface ProfileEditProps {
 const USERNAME_REGEX = /^[A-Za-z0-9_]{1,20}$/;
 const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-let userId = null;
-
 function validateProfileInput(username: string, email: string) {
   const errors: string[] = [];
   if (!username) errors.push('Username is required.');
@@ -56,27 +55,47 @@ function validateProfileInput(username: string, email: string) {
   return errors;
 }
 
-export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditProps): TemplateResult => {
+export const ProfileEditPage = (_props: ProfileEditProps): TemplateResult => {
     const user = getCurrentUser();
     if (!user) {
         return html``; // App.tsx guard handles auth
     }
 
-    const userPromise = fetchUserById(user.id); // hardcoded user id for testing, replace with actual logged in user id
+    const userPromise = fetchUserById(user.id);
 
-    const formData: { username:string; firstname:string; lastname:string; dob:string; email:string } = {
-      username: '', firstname: '', lastname: '', dob: '', email: ''
+    const formData: { username:string; firstname:string; lastname:string; dob:string; email:string; bio:string } = {
+      username: '', firstname: '', lastname: '', dob: '', email: '', bio: ''
     };
 
     let profileImgUrl = '';
+    let selectedInterests: string[] = [];
+
     const onImageChanged = (e: CustomEvent) => {
       profileImgUrl = e.detail.value;
     };
 
     const onInput = (field: keyof typeof formData, event: Event) => {
-      const target = event.target as HTMLInputElement;
+      const target = event.target as HTMLInputElement | HTMLTextAreaElement;
       formData[field] = target.value;
-      console.log(`Input for ${field}:`, target.value);
+    };
+
+    const onBioInput = (event: Event) => {
+      const target = event.target as HTMLTextAreaElement;
+      if (target.value.length > 250) target.value = target.value.slice(0, 250);
+      formData.bio = target.value;
+      const counter = target.closest('.bio-wrapper')?.querySelector('.bio-counter') as HTMLElement | null;
+      if (counter) counter.textContent = `${formData.bio.length}/250`;
+    };
+
+    const toggleInterest = (interest: string, chipEl: HTMLElement) => {
+      const idx = selectedInterests.indexOf(interest);
+      if (idx === -1) {
+        selectedInterests.push(interest);
+        chipEl.classList.add('selected');
+      } else {
+        selectedInterests.splice(idx, 1);
+        chipEl.classList.remove('selected');
+      }
     };
 
     const onSave = async () => {
@@ -93,7 +112,18 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
           return;
         }
 
-        const result = await updateUserInformation(user.id, formData.username, formData.firstname, formData.lastname, formData.email, formData.dob, profileImgUrl || undefined);
+        const result = await updateUserInformation(
+          user.id,
+          formData.username,
+          formData.firstname,
+          formData.lastname,
+          formData.email,
+          formData.dob,
+          profileImgUrl || undefined,
+          formData.bio || undefined,
+          selectedInterests.length ? selectedInterests : undefined,
+        );
+
         if (!result || (result as any).success !== true) {
           throw new Error('Update failed');
         }
@@ -122,8 +152,9 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
 
     const bannerTemplate = until(
         userPromise.then(user => {
-            const userId = Number(user.id);   // important
+            const userId = Number(user.id);
             formData.username = formData.username || user.username || '';
+            formData.bio = formData.bio || user.bio || '';
             const fullName = user.full_name ?? `${user.firstname ?? ''} ${user.lastname ?? ''}`.trim();
             return html`
                 <div class="profile-names">
@@ -137,15 +168,11 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
 
     const personalInfoTemplate = until(
         userPromise.then(user => {
-            userId = Number(user.id) || 1;   // important
             formData.username = formData.username || user.username || '';
             formData.firstname = formData.firstname || user.firstname || '';
             formData.lastname = formData.lastname || user.lastname || '';
             formData.email = formData.email || user.email || '';
             formData.dob = formData.dob || (user.dob ? String(user.dob).slice(0,10) : '');
-
-              const fullName = user.full_name ?? `${user.firstname ?? ''} ${user.lastname ?? ''}`.trim();
-            //const phone = user.phone ?? '';
             return html`
                 <div class="info">
                     <div>
@@ -164,11 +191,51 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
                         <p class="form-label">Email</p>
                         <input type="email" .value=${formData.email} @input=${(e: Event) => onInput('email', e)} /></label>
                     </div>
-                    <!-- <p>Phone: </p> -->
                 </div>
             `;
         }),
         html`<div>Loading profile...</div>`
+    );
+
+    const bioTemplate = until(
+        userPromise.then(user => {
+            formData.bio = formData.bio || user.bio || '';
+            return html`
+                <div class="bio-wrapper">
+                    <p class="form-label">Short Bio</p>
+                    <textarea
+                        maxlength="250"
+                        .value=${formData.bio}
+                        @input=${onBioInput}
+                        placeholder="Tell others a little about yourself…"
+                        rows="3"
+                    ></textarea>
+                    <span class="bio-counter">${formData.bio.length}/250</span>
+                </div>
+            `;
+        }),
+        html``
+    );
+
+    const interestsTemplate = until(
+        userPromise.then(user => {
+            const saved: string[] = Array.isArray(user.interests) ? user.interests : [];
+            selectedInterests = [...saved];
+            return html`
+                <div class="interests-section">
+                    <p class="form-label">Interests <span style="font-weight:normal; color:#999;">(tap to select)</span></p>
+                    <div class="interests-chips">
+                        ${VALID_CATEGORIES.map(cat => html`
+                            <span
+                                class="interest-chip ${saved.includes(cat) ? 'selected' : ''}"
+                                @click=${(e: Event) => toggleInterest(cat, e.currentTarget as HTMLElement)}
+                            >${formatCategoryName(cat)}</span>
+                        `)}
+                    </div>
+                </div>
+            `;
+        }),
+        html``
     );
 
     const styles = css`
@@ -199,12 +266,12 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
         }
         p.form-label {
             font-weight: lighter;
-                color: #666;
+            color: #666;
             font-size: 0.8em;
         }
         .lists {
           flex-direction: column;
-          gap: 16px;
+          gap: 20px;
         }
         h4 {
             margin: 0;
@@ -223,6 +290,59 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
             cursor: pointer;
             opacity: 0.7;
          }
+        .bio-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+        .bio-wrapper textarea {
+            resize: vertical;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .bio-wrapper textarea:focus {
+            outline: 2px solid #a9bb72;
+            border-color: transparent;
+        }
+        .bio-counter {
+            font-size: 0.75rem;
+            color: #999;
+            text-align: right;
+        }
+        .interests-section {
+            width: 100%;
+        }
+        .interests-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .interest-chip {
+            padding: 5px 14px;
+            border-radius: 25px;
+            border: 2px solid #646d4a;
+            color: #646d4a;
+            background: transparent;
+            font-size: 0.875rem;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .interest-chip.selected {
+            background: #646d4a;
+            color: #ece0d5;
+        }
+        .interest-chip:hover {
+            opacity: 0.8;
+        }
     `;
 
     return html`
@@ -245,9 +365,14 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
           ${personalInfoTemplate}
           <button @click=${onSave}>
             Save Changes
-        </button>
+          </button>
         </div>
-       
+
+        <div class="lists">
+          ${bioTemplate}
+          ${interestsTemplate}
+        </div>
+
       </div>
     `;
 };

@@ -95,12 +95,16 @@ pool.getConnection()
 // helper
 async function getUserById(id: number) {
   const [rows] = await pool.query(
-    'SELECT id, username, firstname, lastname, email, dob, avatar_url FROM users WHERE id = ?',
+    'SELECT id, username, firstname, lastname, email, dob, avatar_url, bio, interests FROM users WHERE id = ?',
     [id]
   );
   if (!Array.isArray(rows) || !rows.length) return null;
   const u = rows[0] as any;
-  return { ...u, avatarUrl: u.avatar_url ?? null };
+  return {
+    ...u,
+    avatarUrl: u.avatar_url ?? null,
+    interests: u.interests ? JSON.parse(u.interests) : [],
+  };
 }
 
 async function checkUniqueUsernameEmail(username?: string, email?: string, idToIgnore?: number) {
@@ -172,11 +176,14 @@ const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 app.put('/api/users/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const { username, email, firstname, lastname, dob, avatarUrl } = req.body || {};
+  const { username, email, firstname, lastname, dob, avatarUrl, bio, interests } = req.body || {};
 
   if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Invalid user id' });
   if (!username || !USERNAME_REGEX.test(username)) return res.status(400).json({ error: 'Bad username' });
   if (!email || !EMAIL_REGEX.test(email)) return res.status(400).json({ error: 'Bad email' });
+
+  const bioValue = typeof bio === 'string' ? bio.slice(0, 250) : null;
+  const interestsValue = Array.isArray(interests) ? JSON.stringify(interests) : null;
 
   try {
     const conflicts = await checkUniqueUsernameEmail(username, email, id);
@@ -185,8 +192,8 @@ app.put('/api/users/:id', async (req, res) => {
     }
 
     await pool.query(
-      `UPDATE users SET username = ?, email = ?, firstname = ?, lastname = ?, dob = ?, avatar_url = ? WHERE id = ?`,
-      [username, email, firstname, lastname, dob, avatarUrl ?? null, id]
+      `UPDATE users SET username = ?, email = ?, firstname = ?, lastname = ?, dob = ?, avatar_url = ?, bio = ?, interests = ? WHERE id = ?`,
+      [username, email, firstname, lastname, dob, avatarUrl ?? null, bioValue, interestsValue, id]
     );
 
     const user = await getUserById(id);

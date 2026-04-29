@@ -1110,11 +1110,11 @@ export class CommunityDetailPage extends LitElement {
             <div>
               <div class="moderators-title">Moderated by:</div>
               <div class="moderators">
-                <div class="moderator">
+                <div class="moderator" style="cursor:pointer" @click=${() => { window.location.hash = `/user/${c.ownerId}`; }}>
                   ${c.ownerAvatarUrl
                     ? html`<img class="avatar" src="${c.ownerAvatarUrl}" alt=${ifDefined(c.owner)} />`
                     : html`<div class="avatar"></div>`}
-                  <span>${c.owner ?? 'Unknown'}</span>
+                  <span style="text-decoration:underline">@${c.owner ?? 'Unknown'}</span>
                 </div>
               </div>
 

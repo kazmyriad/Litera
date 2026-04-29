@@ -55,6 +55,16 @@ class BookCard extends LitElement {
                 display: inline-block;
             }
 
+            .book.favorited {
+                background: #7b5494;
+                background-image: linear-gradient(to right, #4a2d5a 48px, #7b5494 50px, transparent 50px);
+            }
+
+            .book:hover.favorited {
+                background: #7b5494;
+                background-image: linear-gradient(to right, #4a2d5a 48px, #7b5494 50px, transparent 50px);
+            }
+
             .book::after {
                 content: "";
                 position: absolute;
@@ -78,6 +88,9 @@ class BookCard extends LitElement {
                 vertical-align: middle;
                 width: 7.5em;
                 overflow: hidden;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
                 color: #ece0d5;
                 font-weight: bold;
                 font-size: 1.3em;
@@ -232,7 +245,7 @@ class BookCard extends LitElement {
                 </svg>`;
 
         return html`
-            <div class="book">
+            <div class="book ${this.favorite ? 'favorited' : ''}">
                 <h3 class="title">${this.title || this.name || "Book Title"}</h3>
                 <div class="controls">
                     <div class="fav-wrap">

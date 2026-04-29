@@ -147,13 +147,21 @@ export async function updateUserInformation(
   lastname: string,
   email: string,
   dob: string,
-  avatarUrl?: string
+  avatarUrl?: string,
+  bio?: string,
+  interests?: string[]
 ) {
   const dobValue = dob ? dob : null;
   const res = await fetch(`${API_BASE}/api/users/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, firstname, lastname, email, dob: dobValue, avatarUrl: avatarUrl ?? null })
+    body: JSON.stringify({
+      username, firstname, lastname, email,
+      dob: dobValue,
+      avatarUrl: avatarUrl ?? null,
+      bio: bio ?? null,
+      interests: interests ?? [],
+    })
   });
   const raw = await res.text();
   return handleResponse(raw, res);

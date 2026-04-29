@@ -92,6 +92,10 @@ export class App extends LitElement {
                 return ProfileEditPage({currentPath: this.currentPath});
             case basePath.startsWith('/profile'):
                 return html`<profile-page></profile-page>`;
+            case basePath.startsWith('/user/'): {
+                const userId = Number(basePath.split('/user/')[1]) || 0;
+                return html`<profile-page .viewUserId=${userId}></profile-page>`;
+            }
             default: 
                 return HomePage({currentPath: this.currentPath});
         }

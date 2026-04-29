@@ -1,8 +1,7 @@
 //this is where we would write the frontend for profile
 // ---- also where we would likely require having logged in + fetched specific user data
 import { html, css, type TemplateResult, LitElement } from "lit";
-import { until } from 'lit/directives/until.js';
-import { customElement, state } from "lit/decorators.js";
+import { customElement, state, property } from "lit/decorators.js";
 import '../components/CommunityCard.jsx';
 import '../components/CommunityContainer.jsx';
 import '../components/BookCard.jsx';
@@ -17,10 +16,13 @@ import {
 
 @customElement('profile-page')
 export class ProfilePage extends LitElement {
+    @property({ type: Number }) viewUserId?: number;
+
     @state() private communities: Community[] = [];
     @state() private books: BookRecord[] = [];
     @state() private favoriteIds: Set<number> = new Set();
     @state() private loading = true;
+    @state() private userData: any = null;
 
     connectedCallback(): void {
         super.connectedCallback();
@@ -33,17 +35,41 @@ export class ProfilePage extends LitElement {
         this.removeEventListener('favorite-toggle', this.handleFavoriteToggle as unknown as EventListener);
     }
 
+    updated(changed: Map<string, unknown>) {
+        if (changed.has('viewUserId')) {
+            this.userData = null;
+            this.loadData();
+        }
+    }
+
+    private get targetUserId(): number | null {
+        if (this.viewUserId) return this.viewUserId;
+        return getCurrentUser()?.id ?? null;
+    }
+
+    private get isOwnProfile(): boolean {
+        const cur = getCurrentUser();
+        if (!cur) return false;
+        return !this.viewUserId || this.viewUserId === cur.id;
+    }
+
     private async loadData() {
+        const targetId = this.targetUserId;
+        if (!targetId) { this.loading = false; return; }
+
+        this.loading = true;
         try {
-            const user = getCurrentUser();
-            const results = await Promise.all([
+            const cur = getCurrentUser();
+            const [userData, communities, books, favorites] = await Promise.all([
+                fetchUserById(targetId),
                 fetchCommunities(),
-                fetchBooks(),
-                user ? fetchFavorites(user.id) : Promise.resolve([] as number[]),
+                this.isOwnProfile ? fetchBooks() : Promise.resolve([] as BookRecord[]),
+                this.isOwnProfile && cur ? fetchFavorites(cur.id) : Promise.resolve([] as number[]),
             ]);
-            this.communities = results[0];
-            this.books = results[1];
-            this.favoriteIds = new Set(results[2]);
+            this.userData = userData;
+            this.communities = communities;
+            this.books = books;
+            this.favoriteIds = new Set(favorites);
         } catch (e) {
             console.error('Failed to load profile data', e);
         } finally {
@@ -53,7 +79,7 @@ export class ProfilePage extends LitElement {
 
     private handleFavoriteToggle = async (e: Event) => {
         const { bookId, favorite } = (e as CustomEvent).detail;
-        if (!bookId) return;
+        if (!bookId || !this.isOwnProfile) return;
         if (!getCurrentUser()) return;
 
         try {
@@ -90,21 +116,33 @@ export class ProfilePage extends LitElement {
     }
 
     render(): TemplateResult {
-        const user = getCurrentUser();
+        const cur = getCurrentUser();
 
-        if (!user) {
+        if (this.isOwnProfile && !cur) {
             return html`<p>Please log in to view your profile.</p>`;
         }
 
-        const userPromise = fetchUserById(user.id);
-        const myCommunities = this.communities.filter(c => c.ownerId === user.id);
+        if (this.loading) {
+            return html`<p style="padding:48px;">Loading…</p>`;
+        }
+
+        const u = this.userData;
+        if (!u) {
+            return html`<p style="padding:48px;">User not found.</p>`;
+        }
+
+        const fullName = u.full_name ?? `${u.firstname ?? ''} ${u.lastname ?? ''}`.trim();
+        const avatarSrc = u.avatarUrl || u.avatar_url || 'https://t3.ftcdn.net/jpg/02/22/85/16/360_F_222851624_jfoMGbJxwRi5AWGdPgXKSABMnzCQo9RN.jpg';
+        const interests: string[] = Array.isArray(u.interests) ? u.interests : [];
+
+        const visibleCommunities = this.communities.filter(c => c.ownerId === u.id);
         const favoriteBooks = this.books.filter(b => this.favoriteIds.has(b.id));
 
         const styles = css`
             :host{
                 display: block;
             }
-            
+
             #card {
                 margin: 48px;
                 border-radius: 8px;
@@ -129,7 +167,7 @@ export class ProfilePage extends LitElement {
             }
             p.form-label {
                 font-weight: lighter;
-                    color: #666;
+                color: #666;
                 font-size: 0.8em;
             }
             .lists {
@@ -144,6 +182,7 @@ export class ProfilePage extends LitElement {
                 height: 100px;
                 border-radius: 100%;
                 object-fit: cover;
+                flex-shrink: 0;
             }
             #card button {
                 background: #a9bb72;
@@ -156,92 +195,93 @@ export class ProfilePage extends LitElement {
                 cursor: pointer;
                 opacity: 0.7;
             }
+            .profile-names {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                justify-content: center;
+            }
+            .profile-names h4, .profile-names h5 {
+                margin: 0;
+            }
+            .bio-text {
+                margin: 8px 0 0;
+                color: #555;
+                font-size: 0.95rem;
+                max-width: 480px;
+                line-height: 1.5;
+            }
         `;
-
-        const bannerTemplate = until(
-            userPromise.then(user => {
-                const fullName = user.full_name ?? `${user.firstname ?? ''} ${user.lastname ?? ''}`.trim();
-                return html`
-                    <div class="profile-names">
-                        <h4>@${user.username ?? 'Unknown'}</h4>
-                        <h5>${fullName || 'No name available'}</h5>
-                    </div>
-                `;
-            }),
-            html`<div>Loading profile...</div>`
-        );
-
-        const personalInfoTemplate = until(
-            userPromise.then(user => {
-                const firstName = user.firstname ?? '';
-                const lastName = user.lastname ?? '';
-                const dob = user.dob ? new Date(user.dob).toLocaleDateString() : 'N/A';
-                const email = user.email ?? '';
-                return html`
-                    <div class="info">
-                        <div>
-                            <p class="form-label">First Name</p>
-                            <p>${firstName}</p>
-                        </div>
-                        <div>
-                            <p class="form-label">Last Name</p>
-                            <p>${lastName}</p>
-                        </div>
-                        <div>
-                            <p class="form-label">DOB</p>
-                            <p>${dob}</p>
-                        </div>
-                        <div>
-                            <p class="form-label">Email</p>
-                            <p>${email}</p>
-                        </div>
-                    </div>
-                `;
-            }),
-            html`<div>Loading profile...</div>`
-        );
 
         return html`
             <style>${styles}</style>
-            <bread-crumb></bread-crumb>
+            ${this.isOwnProfile ? html`<bread-crumb></bread-crumb>` : html`
+                <button style="margin: 16px 24px; background: transparent; color: var(--color-5); border: none; font-size: 1rem; cursor: pointer; padding: 6px 0;"
+                    @click=${() => history.back()}>&larr; Back</button>
+            `}
             <div id="card">
-                <h2>My Profile</h2>
+                <h2>${this.isOwnProfile ? 'My Profile' : `@${u.username}'s Profile`}</h2>
+
                 <div class="banner">
-                <img id="profileImg" src="${user.avatarUrl || 'https://t3.ftcdn.net/jpg/02/22/85/16/360_F_222851624_jfoMGbJxwRi5AWGdPgXKSABMnzCQo9RN.jpg'}" />
-                ${bannerTemplate}
+                    <img id="profileImg" src="${avatarSrc}" />
+                    <div class="profile-names">
+                        <h4>@${u.username ?? 'Unknown'}</h4>
+                        <h5>${fullName || 'No name available'}</h5>
+                        ${u.bio ? html`<p class="bio-text">${u.bio}</p>` : ''}
+                    </div>
                 </div>
 
-                <div class="personal-info">
-                ${personalInfoTemplate}
-                <button @click=${() => window.location.hash = '/profile/edit'}>
-                    <img src="${EditIcon}" alt="Edit Profile" width="16" height="16" />
-                </button>
-                </div>
+                ${this.isOwnProfile ? html`
+                    <div class="personal-info">
+                        <div class="info">
+                            <div>
+                                <p class="form-label">First Name</p>
+                                <p>${u.firstname ?? ''}</p>
+                            </div>
+                            <div>
+                                <p class="form-label">Last Name</p>
+                                <p>${u.lastname ?? ''}</p>
+                            </div>
+                            <div>
+                                <p class="form-label">DOB</p>
+                                <p>${u.dob ? new Date(u.dob).toLocaleDateString() : 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p class="form-label">Email</p>
+                                <p>${u.email ?? ''}</p>
+                            </div>
+                        </div>
+                        <button @click=${() => window.location.hash = '/profile/edit'}>
+                            <img src="${EditIcon}" alt="Edit Profile" width="16" height="16" />
+                        </button>
+                    </div>
+                ` : ''}
 
                 <div class="lists">
-                    <h4>My Interests</h4>
-                        <li style="list-style: none; display:flex; gap: 25px 5px; flex-wrap: wrap;">
-                            <profile-tag text="Book"></profile-tag>
-                            <profile-tag text="Series"></profile-tag>
-                            <profile-tag text="Author"></profile-tag>
-                            <profile-tag text="IP"></profile-tag>
-                            <profile-tag text="Reading"></profile-tag>
-                            <profile-tag text="Learning"></profile-tag>
-                            <profile-tag text="Painting"></profile-tag>
-                            <profile-tag text="Cooking"></profile-tag>
-                        </li>
-                    <h4>My Communities</h4>
+                    ${interests.length ? html`
+                        <h4>${this.isOwnProfile ? 'My Interests' : 'Interests'}</h4>
+                        <ul style="list-style:none; margin:0; padding:0; display:flex; gap:8px 6px; flex-wrap:wrap;">
+                            ${interests.map(i => html`<li><profile-tag text="${i}"></profile-tag></li>`)}
+                        </ul>
+                    ` : ''}
+
+                    <h4>${this.isOwnProfile ? 'My Communities' : 'Communities'}</h4>
                     <community-container>
-                        ${myCommunities.map(c => this.renderCommunityCard(c))}
+                        ${visibleCommunities.length
+                            ? visibleCommunities.map(c => this.renderCommunityCard(c))
+                            : html`<p style="color:#999; padding:8px 0;">No communities yet.</p>`}
                     </community-container>
-                    <h4>My Favorites</h4>
-                    <community-container>
-                        ${this.loading
-                            ? html`<p>Loading...</p>`
-                            : favoriteBooks.length
-                                ? favoriteBooks.map(b => this.renderBookCard(b))
-                                : html`<p style="color:#999; padding:8px 0;">No favorites yet — heart a book in the Libraries page!</p>`}
-                    </community-container>
+
+                    ${this.isOwnProfile ? html`
+                        <h4>My Favorites</h4>
+                        <community-container>
+                            ${this.loading
+                                ? html`<p>Loading...</p>`
+                                : favoriteBooks.length
+                                    ? favoriteBooks.map(b => this.renderBookCard(b))
+                                    : html`<p style="color:#999; padding:8px 0;">No favorites yet — heart a book in the Libraries page!</p>`}
+                        </community-container>
+                    ` : ''}
                 </div>
             </div>
         `;

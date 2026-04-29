@@ -1,6 +1,11 @@
 -- Run these against your production database to create missing tables.
 -- All statements use IF NOT EXISTS so they are safe to re-run.
 
+-- Add bio and interests columns to users (safe to re-run)
+ALTER TABLE litera.users ADD COLUMN IF NOT EXISTS bio VARCHAR(250) NULL;
+ALTER TABLE litera.users ADD COLUMN IF NOT EXISTS interests TEXT NULL;
+
+
 CREATE TABLE IF NOT EXISTS litera.user_favorites (
   id         INT          NOT NULL AUTO_INCREMENT,
   user_id    INT          NOT NULL,
