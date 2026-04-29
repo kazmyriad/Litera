@@ -710,17 +710,9 @@ export class CommunityDetailPage extends LitElement {
       this.settingBook = false;
     }
   }
-  private async joinMeeting(meeting: unknown) {
-    const res = await fetch('/api/meet/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(meeting),
-    });
 
-    const data = await res.json();
-    if (data.meetLink) {
-      window.open(data.meetLink, '_blank', 'noopener,noreferrer');
-    }
+  private joinMeeting() {
+    window.open("https://meet.google.com/zqt-duff-gwi", "_blank", "noopener,noreferrer");
   }
 
   private openEdit() {
@@ -1075,11 +1067,9 @@ export class CommunityDetailPage extends LitElement {
                     </div>
                     <div class="meeting-body">
                       <div class="meeting-topic">${meeting}</div>
-                      <button class="meeting-button" @click=${() => this.joinMeeting({
-                          title: "Chapter 1 Discussion",
-                          startDateTime: "2026-04-28T19:00:00-04:00",
-                          endDateTime: "2026-04-28T20:00:00-04:00",
-                        })}>Join</button>
+                      <button class="meeting-button" @click=${() => this.joinMeeting()}>
+                        Join
+                      </button>
                     </div>
                   </article>
                 `
