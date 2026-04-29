@@ -12,8 +12,13 @@ import {
   updateCommunity,
   deleteCommunity,
   getCurrentUser,
+  fetchCommunityBooks,
+  setCommunityCurrentBook,
+  fetchBooks,
   type Community,
   type MembershipStatus,
+  type CommunityBooks,
+  type BookRecord,
 } from '../Services.js';
 
 @customElement('community-detail-page')
@@ -25,6 +30,12 @@ export class CommunityDetailPage extends LitElement {
   @state() private loading = true;
   @state() private editMode = false;
   @state() private showDeleteConfirm = false;
+  @state() private communityBooks: CommunityBooks = { current: null, previous: [] };
+  @state() private showBookPicker = false;
+  @state() private allBooks: BookRecord[] = [];
+  @state() private bookSearchQuery = '';
+  @state() private selectedBookId: number | null = null;
+  @state() private settingBook = false;
 
   // Edit form values — set in openEdit() before editMode toggles to true
   private editName = '';
@@ -37,6 +48,7 @@ export class CommunityDetailPage extends LitElement {
     :host {
       display: block;
       min-height: 100vh;
+      height: 100%;
       background: var(--color-5);
       color: var(--color-text-dark);
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -400,6 +412,77 @@ export class CommunityDetailPage extends LitElement {
 
     .delete-warning { color: #c0392b; font-weight: 600; margin-bottom: 8px; }
 
+    .btn-set-book {
+      margin-top: 12px;
+      background: var(--color-4);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-set-book:hover { opacity: 0.85; }
+
+    .book-picker-list {
+      max-height: 340px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .book-picker-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 120ms;
+    }
+    .book-picker-item:last-child { border-bottom: none; }
+    .book-picker-item:hover { background: #f5f5f5; }
+    .book-picker-item.selected { background: rgba(100,109,74,0.12); }
+
+    .book-picker-thumb {
+      width: 36px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 3px;
+      flex-shrink: 0;
+      background: #ddd;
+    }
+
+    .book-picker-info { flex: 1; min-width: 0; }
+    .book-picker-title { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .book-picker-author { font-size: 0.8rem; color: #666; }
+
+    .picker-search {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+    .picker-search:focus { outline: none; border-color: var(--color-4); }
+
+    .no-current-book {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: rgba(255,255,255,0.6);
+      font-style: italic;
+      min-height: 80px;
+      max-width: 460px;
+      padding: 18px;
+      font-size: 0.9rem;
+    }
+
     @media (max-width: 900px) {
       .page {
         margin: 20px 16px 40px;
@@ -467,16 +550,45 @@ export class CommunityDetailPage extends LitElement {
     if (!this.communityId) return;
     this.loading = true;
     try {
-      const [community, membership] = await Promise.all([
+      const [community, membership, communityBooks] = await Promise.all([
         getCommunityById(this.communityId),
         getMembership(this.communityId),
+        fetchCommunityBooks(this.communityId),
       ]);
       this.community = community;
       this.membership = membership;
+      this.communityBooks = communityBooks;
     } catch (e) {
       console.error('Failed to load community', e);
     } finally {
       this.loading = false;
+    }
+  }
+
+  private async openBookPicker() {
+    if (this.allBooks.length === 0) {
+      try {
+        this.allBooks = await fetchBooks();
+      } catch (e) {
+        console.error('Failed to load books', e);
+      }
+    }
+    this.bookSearchQuery = '';
+    this.selectedBookId = null;
+    this.showBookPicker = true;
+  }
+
+  private async handleSetCurrentBook() {
+    if (!this.community || this.selectedBookId === null) return;
+    this.settingBook = true;
+    try {
+      await setCommunityCurrentBook(this.community.id, this.selectedBookId);
+      this.communityBooks = await fetchCommunityBooks(this.community.id);
+      this.showBookPicker = false;
+    } catch (e) {
+      console.error('Failed to set current book', e);
+    } finally {
+      this.settingBook = false;
     }
   }
 
@@ -540,7 +652,9 @@ export class CommunityDetailPage extends LitElement {
 
     const isAdmin = this.membership.role === 'admin' || user.id === this.community.ownerId;
     if (isAdmin) {
-      return html`<button class="action-btn btn-edit" @click=${this.openEdit.bind(this)}>Edit Community</button>`;
+      return html`
+        <button class="action-btn btn-edit" @click=${this.openEdit.bind(this)}>Edit Community</button>
+      `;
     }
 
     return html`
@@ -548,6 +662,61 @@ export class CommunityDetailPage extends LitElement {
         class="action-btn ${this.membership.isMember ? 'btn-leave' : 'btn-join'}"
         @click=${this.handleJoinLeave.bind(this)}
       >${this.membership.isMember ? 'Leave' : 'Join'}</button>
+    `;
+  }
+
+  private isAdmin(): boolean {
+    const user = getCurrentUser();
+    if (!user || !this.community) return false;
+    return this.membership.role === 'admin' || user.id === this.community.ownerId;
+  }
+
+  private renderBookPickerModal(): TemplateResult {
+    const q = this.bookSearchQuery.toLowerCase();
+    const filtered = q
+      ? this.allBooks.filter(b =>
+          b.title.toLowerCase().includes(q) || b.authors.toLowerCase().includes(q)
+        )
+      : this.allBooks;
+
+    return html`
+      <div class="overlay">
+        <div class="modal">
+          <h2>Set Current Book</h2>
+          <input
+            class="picker-search"
+            type="text"
+            placeholder="Search by title or author..."
+            .value=${this.bookSearchQuery}
+            @input=${(e: Event) => { this.bookSearchQuery = (e.target as HTMLInputElement).value; }}
+          />
+          <div class="book-picker-list">
+            ${filtered.slice(0, 60).map(b => html`
+              <div
+                class="book-picker-item ${this.selectedBookId === b.id ? 'selected' : ''}"
+                @click=${() => { this.selectedBookId = b.id; }}
+              >
+                ${b.thumbnail
+                  ? html`<img class="book-picker-thumb" src="${b.thumbnail}" alt="${b.title}" />`
+                  : html`<div class="book-picker-thumb"></div>`}
+                <div class="book-picker-info">
+                  <div class="book-picker-title">${b.title}</div>
+                  <div class="book-picker-author">${b.authors}</div>
+                </div>
+              </div>
+            `)}
+            ${filtered.length === 0 ? html`<div style="padding:16px;color:#999;text-align:center;">No books found.</div>` : null}
+          </div>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click=${() => { this.showBookPicker = false; }}>Cancel</button>
+            <button
+              class="btn-save"
+              ?disabled=${this.selectedBookId === null || this.settingBook}
+              @click=${this.handleSetCurrentBook.bind(this)}
+            >${this.settingBook ? 'Saving...' : 'Set as Current Read'}</button>
+          </div>
+        </div>
+      </div>
     `;
   }
 
@@ -634,6 +803,7 @@ export class CommunityDetailPage extends LitElement {
     return html`
       ${this.editMode ? this.renderEditModal() : null}
       ${this.showDeleteConfirm ? this.renderDeleteConfirm() : null}
+      ${this.showBookPicker ? this.renderBookPickerModal() : null}
 
       <main class="page">
         <section class="hero">
@@ -653,16 +823,24 @@ export class CommunityDetailPage extends LitElement {
               <div class="member-count">${c.description}</div>
 
               <div class="subheading">Currently Reading:</div>
-              <div class="current-book">
-                <img
-                  src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1631088473i/6185.jpg"
-                  alt="Wuthering Heights cover"
-                />
-                <div class="current-book-info">
-                  <div class="current-book-title">Wuthering Heights</div>
-                  <div class="current-book-author">by Emily Bronte</div>
+              ${this.communityBooks.current ? html`
+                <div class="current-book">
+                  ${this.communityBooks.current.thumbnail
+                    ? html`<img src="${this.communityBooks.current.thumbnail}" alt="${this.communityBooks.current.title} cover" />`
+                    : html`<div style="width:120px;background:#555;"></div>`}
+                  <div class="current-book-info">
+                    <div class="current-book-title">${this.communityBooks.current.title}</div>
+                    <div class="current-book-author">by ${this.communityBooks.current.authors}</div>
+                  </div>
                 </div>
-              </div>
+              ` : html`
+                <div class="no-current-book">No current read set yet.</div>
+              `}
+              ${this.isAdmin() ? html`
+                <button class="btn-set-book" @click=${this.openBookPicker.bind(this)}>
+                  ${this.communityBooks.current ? 'Change Current Book' : 'Set Current Book'}
+                </button>
+              ` : null}
             </div>
 
             <div>
@@ -676,27 +854,16 @@ export class CommunityDetailPage extends LitElement {
 
               <div class="subheading">Previous Reads:</div>
               <div class="previous-reads">
-                <div class="book-thumb">
-                  <img
-                    src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1660273739i/84.jpg"
-                    alt="Frankenstein cover"
-                  />
-                  <span>Frankenstein</span>
-                </div>
-                <div class="book-thumb">
-                  <img
-                    src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1320399351i/1885.jpg"
-                    alt="Pride and Prejudice cover"
-                  />
-                  <span>Pride & Prejudice</span>
-                </div>
-                <div class="book-thumb">
-                  <img
-                    src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1447303603i/2767052.jpg"
-                    alt="The Hunger Games cover"
-                  />
-                  <span>The Hunger Games</span>
-                </div>
+                ${this.communityBooks.previous.length
+                  ? this.communityBooks.previous.map(b => html`
+                      <div class="book-thumb">
+                        ${b.thumbnail
+                          ? html`<img src="${b.thumbnail}" alt="${b.title} cover" />`
+                          : html`<div style="width:84px;height:122px;background:#ccc;border-radius:3px;"></div>`}
+                        <span>${b.title}</span>
+                      </div>
+                    `)
+                  : html`<p style="color:#888;font-size:0.85rem;font-style:italic;">No previous reads yet.</p>`}
               </div>
             </div>
           </div>

@@ -26,27 +26,49 @@ class Breadcrumb extends LitElement {
         return css`
         :host{
             font-size: 1em;
-            color: var(--color-2);
+            display: block;
+            margin: 1em;
+        }
+        nav {
+            display: inline-flex;
         }
         .trail{
             display: flex;
+            align-items: center;
+            background-color: var(--color-3);
+            border-radius: 50px;
+            padding: 0.5em 1.25em;
+            gap: 0.25em;
         }
         a{
-            margin: 1em 1em 0em 1em;
             color: var(--color-2);
-            font-weight: bold;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 0.25em 0.5em;
+            border-radius: 50px;
+            transition: background-color 150ms ease, color 150ms ease;
         }
         a:hover{
+            background-color: rgba(127, 85, 58, 0.12);
             color: var(--color-1);
         }
+        .separator {
+            color: var(--color-2);
+            opacity: 0.5;
+            font-size: 0.85em;
+            user-select: none;
+        }
         .lastCrumb{
-            font-size: 1.2em;
-            margin-top: .7em;
             color: var(--color-4);
+            font-weight: 600;
             text-decoration: none;
+            padding: 0.25em 0.5em;
+            border-radius: 50px;
+            transition: background-color 150ms ease, color 150ms ease;
         }
         .lastCrumb:hover{
-            color:var(--color-5);
+            background-color: rgba(100, 109, 74, 0.12);
+            color: var(--color-5);
         }
         `;
     }
@@ -56,7 +78,7 @@ class Breadcrumb extends LitElement {
         <nav>
             <div class="trail">
                 ${this.segments.slice(0, this.segments.length - 1).map((segment) => html`
-                    <a href="${segment}">${segment}</a> <p>/</p>`)}
+                    <a href="${segment}">${segment}</a><span class="separator">/</span>`)}
                 ${this.segments.slice(-1).map((segment) => html`
                     <a href="${segment}" class="lastCrumb">${segment}</a>`)}
             </div>

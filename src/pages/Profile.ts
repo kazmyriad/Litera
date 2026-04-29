@@ -105,6 +105,7 @@ export class ProfilePage extends LitElement {
                 display: block;
                 background-color: var(--color-3);
             }
+            
             #card {
                 margin: 48px;
                 border-radius: 8px;
@@ -240,7 +241,6 @@ export class ProfilePage extends LitElement {
             </div>
         `;
     }
-
 };
 
 export default ProfilePage;

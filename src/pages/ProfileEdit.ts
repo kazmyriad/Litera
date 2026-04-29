@@ -236,24 +236,6 @@ export const ProfileEditPage = ({ currentPath = '/profile/edit' }: ProfileEditPr
             Save Changes
         </button>
         </div>
-
-        <div class="lists">
-            <h4>My Communities</h4>
-            <community-container>
-                <community-card></community-card>
-                <community-card></community-card> 
-                <community-card></community-card>  
-                <!-- Ideally the insertion of community card should be in
-                 community-container, this is just so we have something for the
-                 presentation + testing -->
-            </community-container>
-            <h4>My Favorites</h4>
-            <community-container>
-                <book-card></book-card>
-                <book-card></book-card>
-                <book-card></book-card>
-            </community-container>
-        </div>
        
       </div>
       <p>${currentPath}</p>

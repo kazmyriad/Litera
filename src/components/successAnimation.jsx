@@ -81,7 +81,7 @@ class SuccessAnimation extends LitElement {
     h1 {
         margin-top: 16px;
         text-align: center;
-        color: white;
+        color: var(--color-3);
     }
 
     
@@ -124,9 +124,10 @@ class SuccessAnimation extends LitElement {
 
   randomizeColors() {
     const baseColors = [
-        { h: 80,  s: 17, l: 24 }, // #414833
-        { h: 75,  s: 19, l: 36 }, // #646D4A
-        { h: 325, s: 58, l: 20 }  // #501537
+        { h: 33,  s: 44, l: 49 },  // #7f553a (color-1) - warm brown
+        { h: 40,  s: 32, l: 63 }, // #a58a64 (color-2) - tan/gold
+        { h: 75,  s: 19, l: 36 }, // #646D4A (color-4) - olive green
+        { h: 80,  s: 17, l: 24 }  // #414833 (color-5) - dark green
     ];
 
     const base = baseColors[Math.floor(Math.random() * baseColors.length)];

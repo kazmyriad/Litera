@@ -10,10 +10,43 @@ import { getCurrentUser, fetchCommunities, type Community } from "../Services.js
 export class CommunitiesPage extends LitElement {
     @state() private communities: Community[] = [];
     @state() private loading = true;
+    @state() private searchQuery = '';
+    @state() private activeFilters: string[] = [];
 
     connectedCallback(): void {
         super.connectedCallback();
         this.loadCommunities();
+        this.addEventListener('search-changed', this.handleSearchChanged as unknown as EventListener);
+    }
+
+    disconnectedCallback(): void {
+        super.disconnectedCallback();
+        this.removeEventListener('search-changed', this.handleSearchChanged as unknown as EventListener);
+    }
+
+    private handleSearchChanged = (e: Event) => {
+        const { query, filters } = (e as CustomEvent).detail;
+        this.searchQuery = query;
+        this.activeFilters = filters;
+    };
+
+    private filterAndSortCommunities(communities: Community[]): Community[] {
+        const q = this.searchQuery.toLowerCase();
+        let result = q
+            ? communities.filter(c =>
+                c.name.toLowerCase().includes(q) ||
+                c.description.toLowerCase().includes(q) ||
+                (Array.isArray(c.categories) ? c.categories.join(' ') : '').toLowerCase().includes(q)
+              )
+            : communities;
+
+        if (this.activeFilters.includes('A-Z')) {
+            result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+        }
+        if (this.activeFilters.includes('Recently Updated')) {
+            result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        }
+        return result;
     }
 
     private async loadCommunities() {
@@ -37,8 +70,12 @@ export class CommunitiesPage extends LitElement {
         const user = getCurrentUser();
         const isAuthenticated = !!user;
 
-        const popularCommunities = this.communities.filter(c => c.visibility === 'public').slice(0, 3); // first 3 as popular
-        const myCommunities = isAuthenticated ? this.communities.filter(c => c.ownerId === user.id) : [];
+        const popularCommunities = this.filterAndSortCommunities(
+            this.communities.filter(c => c.visibility === 'public').slice(0, 3)
+        );
+        const myCommunities = isAuthenticated
+            ? this.filterAndSortCommunities(this.communities.filter(c => c.ownerId === user.id))
+            : [];
 
         const styles = css`
             :host {
@@ -104,7 +141,9 @@ export class CommunitiesPage extends LitElement {
                 <div class="popular-communities">
                     <h3>Popular This Week</h3>
                     <community-container>
-                        ${popularCommunities.map(c => this.renderCommunityCard(c))}
+                        ${popularCommunities.length
+                            ? popularCommunities.map(c => this.renderCommunityCard(c))
+                            : html`<p style="color:#999; padding:8px 0;">No communities match your search.</p>`}
                     </community-container>
                 </div>
 

@@ -11,16 +11,20 @@ export class LibrariesPage extends LitElement {
     @state() private books: BookRecord[] = [];
     @state() private favoriteIds: Set<number> = new Set();
     @state() private loading = true;
+    @state() private searchQuery = '';
+    @state() private activeFilters: string[] = [];
 
     connectedCallback(): void {
         super.connectedCallback();
         this.loadBooks();
         this.addEventListener('favorite-toggle', this.handleFavoriteToggle as unknown as EventListener);
+        this.addEventListener('search-changed', this.handleSearchChanged as unknown as EventListener);
     }
 
     disconnectedCallback(): void {
         super.disconnectedCallback();
         this.removeEventListener('favorite-toggle', this.handleFavoriteToggle as unknown as EventListener);
+        this.removeEventListener('search-changed', this.handleSearchChanged as unknown as EventListener);
     }
 
     private async loadBooks() {
@@ -36,6 +40,35 @@ export class LibrariesPage extends LitElement {
         } finally {
             this.loading = false;
         }
+    }
+
+    private handleSearchChanged = (e: Event) => {
+        const { query, filters } = (e as CustomEvent).detail;
+        this.searchQuery = query;
+        this.activeFilters = filters;
+    };
+
+    private filterAndSortBooks(books: BookRecord[]): BookRecord[] {
+        const q = this.searchQuery.toLowerCase();
+        let result = q
+            ? books.filter(b =>
+                b.title.toLowerCase().includes(q) ||
+                b.authors.toLowerCase().includes(q) ||
+                (b.description ?? '').toLowerCase().includes(q) ||
+                (b.categories ?? '').toLowerCase().includes(q)
+              )
+            : books;
+
+        if (this.activeFilters.includes('A-Z')) {
+            result = [...result].sort((a, b) => a.title.localeCompare(b.title));
+        }
+        if (this.activeFilters.includes('Popular')) {
+            result = [...result].sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0));
+        }
+        if (this.activeFilters.includes('Recently Updated')) {
+            result = [...result].sort((a, b) => (b.published_year ?? 0) - (a.published_year ?? 0));
+        }
+        return result;
     }
 
     private handleFavoriteToggle = async (e: Event) => {
@@ -72,7 +105,8 @@ export class LibrariesPage extends LitElement {
     render(): TemplateResult {
         const user = getCurrentUser();
         const isAuthenticated = !!user;
-        const favoriteBooks = this.books.filter(b => this.favoriteIds.has(b.id));
+        const filteredBooks = this.filterAndSortBooks(this.books);
+        const favoriteBooks = this.filterAndSortBooks(this.books.filter(b => this.favoriteIds.has(b.id)));
 
         const styles = css`
             :host {
@@ -108,14 +142,16 @@ export class LibrariesPage extends LitElement {
                 <community-container>
                     ${this.loading
                         ? html`<p>Loading...</p>`
-                        : this.books.map(b => this.renderBookCard(b))}
+                        : filteredBooks.length
+                            ? filteredBooks.map(b => this.renderBookCard(b))
+                            : html`<p style="color:#999; padding:8px 0;">No books match your search.</p>`}
                 </community-container>
             </div>
             ${isAuthenticated ? html`
                 <div class="community-reads">
                     <h3>My Community Reads</h3>
                     <community-container>
-                        ${this.books.slice(0, 3).map(b => this.renderBookCard(b))}
+                        ${this.filterAndSortBooks(this.books.slice(0, 3)).map(b => this.renderBookCard(b))}
                     </community-container>
                 </div>
                 <div class="favorites">
@@ -129,7 +165,7 @@ export class LibrariesPage extends LitElement {
                 <div class="user-shelf">
                     <h3>User-Defined-Shelf</h3>
                     <community-container>
-                        ${this.books.slice(0, 2).map(b => this.renderBookCard(b))}
+                        ${this.filterAndSortBooks(this.books.slice(0, 2)).map(b => this.renderBookCard(b))}
                     </community-container>
                 </div>
             ` : null}

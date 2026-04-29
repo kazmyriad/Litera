@@ -392,6 +392,29 @@ export async function removeFavorite(bookId: number): Promise<void> {
   handleResponse(raw, res);
 }
 
+export type CommunityBooks = {
+  current: BookRecord | null;
+  previous: BookRecord[];
+};
+
+export async function fetchCommunityBooks(communityId: number): Promise<CommunityBooks> {
+  const res = await fetch(`${API_BASE}/api/communities/${communityId}/books`);
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
+export async function setCommunityCurrentBook(communityId: number, bookId: number): Promise<{ success: boolean }> {
+  const user = getCurrentUser();
+  if (!user) throw new Error('Must be logged in to set the current book');
+  const res = await fetch(`${API_BASE}/api/communities/${communityId}/books`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ book_id: bookId, requesting_user_id: user.id }),
+  });
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
 export async function joinCommunity(communityId: number): Promise<{
   success: boolean;
   alreadyMember?: boolean;

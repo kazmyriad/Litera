@@ -143,6 +143,7 @@ class SearchBar extends LitElement {
 
     this.dropdownOpen = false;
     this.activeFilters = [];
+    this._query = '';
 
     this.filterOptions = ["A-Z", "Recently Updated", "Popular"];
   }
@@ -155,6 +156,19 @@ class SearchBar extends LitElement {
       this.dropdownOpen = false;
       this.requestUpdate();
     }
+  }
+
+  _dispatchSearch() {
+    this.dispatchEvent(new CustomEvent('search-changed', {
+      detail: { query: this._query, filters: [...this.activeFilters] },
+      bubbles: true,
+      composed: true,
+    }));
+  }
+
+  _onInput(e) {
+    this._query = e.target.value;
+    this._dispatchSearch();
   }
 
   toggleDropdown() {
@@ -171,13 +185,13 @@ class SearchBar extends LitElement {
     }
 
     this.requestUpdate();
-
-    console.log(`Active Filters: ${this.activeFilters.join(", ")}`);
+    this._dispatchSearch();
   }
 
   removeTag(option) {
     this.activeFilters = this.activeFilters.filter(filter => filter !== option);
     this.requestUpdate();
+    this._dispatchSearch();
   }
 
   render() {
@@ -189,6 +203,7 @@ class SearchBar extends LitElement {
             class="search-input"
             type="text"
             placeholder="browse by title, books, genres..."
+            @input=${(e) => this._onInput(e)}
           />
         </div>
 

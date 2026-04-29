@@ -1,4 +1,7 @@
-CREATE TABLE IF NOT EXISTS litera.community_books (
+-- Run this once against your database to enable community book tracking.
+-- After running, rebuild and restart the server.
+
+CREATE TABLE IF NOT EXISTS community_books (
   id            INT          NOT NULL AUTO_INCREMENT,
   community_id  INT          NOT NULL,
   book_id       INT UNSIGNED NOT NULL,
@@ -10,4 +13,3 @@ CREATE TABLE IF NOT EXISTS litera.community_books (
   CONSTRAINT fk_cb_community FOREIGN KEY (community_id) REFERENCES communities (id) ON DELETE CASCADE,
   CONSTRAINT fk_cb_book      FOREIGN KEY (book_id)      REFERENCES books        (id) ON DELETE CASCADE
 );
-

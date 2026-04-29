@@ -604,6 +604,68 @@ app.delete('/api/communities/:id', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+// ----------- COMMUNITY BOOK ROUTES --------------
+// GET /api/communities/:id/books — returns { current: BookRecord|null, previous: BookRecord[] }
+app.get('/api/communities/:id/books', async (req, res) => {
+    const communityId = Number(req.params.id);
+    if (!Number.isInteger(communityId) || communityId < 1)
+        return res.status(400).json({ error: 'Invalid community id' });
+    try {
+        const [rows] = await pool.query(`SELECT b.*, cb.status, cb.added_at AS cb_added_at
+       FROM community_books cb
+       JOIN books b ON cb.book_id = b.id
+       WHERE cb.community_id = ?
+       ORDER BY cb.added_at DESC`, [communityId]);
+        const books = Array.isArray(rows) ? rows : [];
+        res.json({
+            current: books.find(b => b.status === 'current') ?? null,
+            previous: books.filter(b => b.status === 'previous'),
+        });
+    }
+    catch (e) {
+        console.error('fetch community books error', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+// POST /api/communities/:id/books — set a new current book (owner/admin only)
+// Body: { book_id, requesting_user_id }
+// The previous current book (if any) is automatically demoted to 'previous'.
+app.post('/api/communities/:id/books', async (req, res) => {
+    const communityId = Number(req.params.id);
+    const bookId = Number((req.body || {}).book_id);
+    const requestingUserId = Number((req.body || {}).requesting_user_id);
+    if (!Number.isInteger(communityId) || communityId < 1)
+        return res.status(400).json({ error: 'Invalid community id' });
+    if (!Number.isInteger(bookId) || bookId < 1)
+        return res.status(400).json({ error: 'valid book_id is required' });
+    if (!Number.isInteger(requestingUserId) || requestingUserId < 1)
+        return res.status(400).json({ error: 'valid requesting_user_id is required' });
+    try {
+        const [communityRows] = await pool.query('SELECT owner_id FROM communities WHERE id = ? LIMIT 1', [communityId]);
+        if (!Array.isArray(communityRows) || communityRows.length === 0)
+            return res.status(404).json({ error: 'Community not found' });
+        const [memberRows] = await pool.query('SELECT community_role FROM community_members WHERE user_id = ? AND community_id = ? LIMIT 1', [requestingUserId, communityId]);
+        const isOwner = communityRows[0].owner_id === requestingUserId;
+        const isAdmin = Array.isArray(memberRows) && memberRows.length > 0 &&
+            memberRows[0].community_role === 'admin';
+        if (!isOwner && !isAdmin)
+            return res.status(403).json({ error: 'Only admins can set the current book' });
+        const [bookRows] = await pool.query('SELECT id FROM books WHERE id = ? LIMIT 1', [bookId]);
+        if (!Array.isArray(bookRows) || bookRows.length === 0)
+            return res.status(404).json({ error: 'Book not found' });
+        // Demote any existing current book to previous
+        await pool.query(`UPDATE community_books SET status = 'previous' WHERE community_id = ? AND status = 'current'`, [communityId]);
+        // Insert or re-promote this book to current
+        await pool.query(`INSERT INTO community_books (community_id, book_id, status)
+       VALUES (?, ?, 'current')
+       ON DUPLICATE KEY UPDATE status = 'current', added_at = CURRENT_TIMESTAMP`, [communityId, bookId]);
+        res.json({ success: true });
+    }
+    catch (e) {
+        console.error('set community book error', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 // ----------- BOOK ROUTES --------------
 app.get('/api/books', async (_req, res) => {
     try {
@@ -629,6 +691,53 @@ app.get('/api/books/:id', async (req, res) => {
     }
     catch (e) {
         console.error('fetch book error', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+// ----------- FAVORITES ROUTES --------------
+app.get('/api/favorites', async (req, res) => {
+    const userId = Number(req.query.user_id);
+    if (!Number.isInteger(userId) || userId < 1) {
+        return res.status(400).json({ error: 'valid user_id is required' });
+    }
+    try {
+        const [rows] = await pool.query('SELECT book_id FROM user_favorites WHERE user_id = ?', [userId]);
+        res.json({ bookIds: rows.map(r => r.book_id) });
+    }
+    catch (e) {
+        console.error('fetch favorites error', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+app.post('/api/favorites', async (req, res) => {
+    const userId = Number((req.body || {}).user_id);
+    const bookId = Number((req.body || {}).book_id);
+    if (!Number.isInteger(userId) || userId < 1)
+        return res.status(400).json({ error: 'valid user_id required' });
+    if (!Number.isInteger(bookId) || bookId < 1)
+        return res.status(400).json({ error: 'valid book_id required' });
+    try {
+        await pool.query('INSERT IGNORE INTO user_favorites (user_id, book_id) VALUES (?, ?)', [userId, bookId]);
+        res.status(201).json({ success: true });
+    }
+    catch (e) {
+        console.error('add favorite error', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+app.delete('/api/favorites', async (req, res) => {
+    const userId = Number((req.body || {}).user_id);
+    const bookId = Number((req.body || {}).book_id);
+    if (!Number.isInteger(userId) || userId < 1)
+        return res.status(400).json({ error: 'valid user_id required' });
+    if (!Number.isInteger(bookId) || bookId < 1)
+        return res.status(400).json({ error: 'valid book_id required' });
+    try {
+        await pool.query('DELETE FROM user_favorites WHERE user_id = ? AND book_id = ?', [userId, bookId]);
+        res.json({ success: true });
+    }
+    catch (e) {
+        console.error('remove favorite error', e);
         res.status(500).json({ error: 'Server error' });
     }
 });

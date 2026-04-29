@@ -125,7 +125,7 @@ class BookCard extends LitElement {
             }
 
             .fav-btn:hover svg path {
-                stroke: #ece0d5;
+                stroke: var(--color-3);
                 opacity: 1;
             }
 
@@ -174,14 +174,15 @@ class BookCard extends LitElement {
             @keyframes bw  { from{opacity:1;transform:translate(0,0)   scale(1)} to{opacity:0;transform:translate(-26px,0)        scale(0)} }
             @keyframes bnw { from{opacity:1;transform:translate(0,0)   scale(1)} to{opacity:0;transform:translate(-18px,-18px)    scale(0)} }
 
-            .b1 { background: #ffd700; animation-name: bn;  animation-delay: 0s;     }
-            .b2 { background: #ff6b6b; animation-name: bne; animation-delay: 0.04s;  }
-            .b3 { background: #a29bfe; animation-name: be;  animation-delay: 0s;     }
-            .b4 { background: #fd79a8; animation-name: bse; animation-delay: 0.04s;  }
-            .b5 { background: #55efc4; animation-name: bs;  animation-delay: 0s;     }
-            .b6 { background: #74b9ff; animation-name: bsw; animation-delay: 0.04s;  }
-            .b7 { background: #ffd700; animation-name: bw;  animation-delay: 0s;     }
-            .b8 { background: #ff7675; animation-name: bnw; animation-delay: 0.04s;  }
+            /* Litera palette burst colors */
+            .b1 { background: var(--color-1); animation-name: bn;  animation-delay: 0s;     }
+            .b2 { background: var(--color-2); animation-name: bne; animation-delay: 0.04s;  }
+            .b3 { background: var(--color-4); animation-name: be;  animation-delay: 0s;     }
+            .b4 { background: var(--color-5); animation-name: bse; animation-delay: 0.04s;  }
+            .b5 { background: var(--color-1); animation-name: bs;  animation-delay: 0s;     }
+            .b6 { background: var(--color-2); animation-name: bsw; animation-delay: 0.04s;  }
+            .b7 { background: var(--color-4); animation-name: bw;  animation-delay: 0s;     }
+            .b8 { background: var(--color-5); animation-name: bnw; animation-delay: 0.04s;  }
 
             /* ── card hover expansions ────────────────────────────── */
             .book:hover {
@@ -223,11 +224,11 @@ class BookCard extends LitElement {
         const heartIcon = this.favorite
             ? html`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                     <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"
-                          fill="#ece0d5"/>
+                          fill="var(--color-1)"/>
                 </svg>`
             : html`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                     <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"
-                          fill="none" stroke="#ece0d5" stroke-width="1.5"/>
+                          fill="none" stroke="var(--color-3)" stroke-width="1.5"/>
                 </svg>`;
 
         return html`

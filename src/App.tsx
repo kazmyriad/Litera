@@ -105,10 +105,10 @@ export class App extends LitElement {
                 <main class="content">
                     ${this.renderPage()}
                 </main>
-                
+                <app-footer></app-footer>
             </div>
             <auth-overlay></auth-overlay>
-            <app-footer></app-footer>
+            
         `;
     }
     
