@@ -16,6 +16,7 @@ import {
     fetchUserShelves,
     createUserShelf,
     updateUserShelf,
+    createBook,
     type BookRecord,
     type CommunityRead,
     type UserShelf,
@@ -41,6 +42,17 @@ export class LibrariesPage extends LitElement {
     @state() private shelfSearchQuery = '';
     @state() private creatingShelf = false;
     @state() private shelfError = '';
+
+    // Manual add-book form state (shared between creator and editor)
+    @state() private showAddBookForm = false;
+    @state() private addBookContext: 'creator' | 'editor' = 'creator';
+    @state() private addBookTitle = '';
+    @state() private addBookAuthors = '';
+    @state() private addBookIsbn = '';
+    @state() private addBookThumbnail = '';
+    @state() private addBookYear = '';
+    @state() private addingBook = false;
+    @state() private addBookError = '';
 
     // Shelf editor state
     @state() private showShelfEditor = false;
@@ -293,6 +305,36 @@ export class LibrariesPage extends LitElement {
         .shelf-error { color: #c0392b; font-size: 0.85rem; margin-bottom: 8px; }
 
         .empty-state { color: #999; font-style: italic; padding: 8px 0; font-size: 0.9rem; }
+
+        .add-book-back {
+            background: none;
+            border: none;
+            color: var(--color-4);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-family: inherit;
+        }
+        .add-book-back:hover { text-decoration: underline; }
+
+        .btn-add-book {
+            background: var(--color-4);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-add-book:hover { opacity: 0.85; }
+
+        .add-book-error { color: #c0392b; font-size: 0.85rem; margin: 8px 0 0; }
     `;
 
     connectedCallback(): void {
@@ -425,6 +467,93 @@ export class LibrariesPage extends LitElement {
         }
     }
 
+    private openAddBookForm(context: 'creator' | 'editor') {
+        this.addBookContext = context;
+        this.addBookTitle = '';
+        this.addBookAuthors = '';
+        this.addBookIsbn = '';
+        this.addBookThumbnail = '';
+        this.addBookYear = '';
+        this.addBookError = '';
+        this.showAddBookForm = true;
+    }
+
+    private async handleAddBook() {
+        if (!this.addBookTitle.trim() || !this.addBookAuthors.trim()) {
+            this.addBookError = 'Title and Author are required.';
+            return;
+        }
+        this.addingBook = true;
+        this.addBookError = '';
+        try {
+            const newBook = await createBook({
+                title: this.addBookTitle.trim(),
+                authors: this.addBookAuthors.trim(),
+                isbn13: this.addBookIsbn.trim() || undefined,
+                thumbnail: this.addBookThumbnail.trim() || undefined,
+                published_year: this.addBookYear ? Number(this.addBookYear) : undefined,
+            });
+            this.books = [...this.books, newBook];
+            if (this.addBookContext === 'creator') {
+                this.shelfSelectedIds = new Set([...this.shelfSelectedIds, newBook.id]);
+                this.shelfSearchQuery = newBook.title;
+            } else {
+                this.editShelfSelectedIds = new Set([...this.editShelfSelectedIds, newBook.id]);
+                this.editShelfSearchQuery = newBook.title;
+            }
+            this.showAddBookForm = false;
+        } catch (e) {
+            this.addBookError = e instanceof Error ? e.message : 'Failed to add book.';
+        } finally {
+            this.addingBook = false;
+        }
+    }
+
+    private renderAddBookForm(): TemplateResult {
+        return html`
+            <button class="add-book-back" @click=${() => { this.showAddBookForm = false; }}>
+                ← Back to search
+            </button>
+            <div class="form-field">
+                <label>Title <span style="color:#c0392b">*</span></label>
+                <input .value=${this.addBookTitle}
+                    @input=${(e: Event) => { this.addBookTitle = (e.target as HTMLInputElement).value; }}
+                    placeholder="e.g. The Great Gatsby" />
+            </div>
+            <div class="form-field">
+                <label>Author(s) <span style="color:#c0392b">*</span></label>
+                <input .value=${this.addBookAuthors}
+                    @input=${(e: Event) => { this.addBookAuthors = (e.target as HTMLInputElement).value; }}
+                    placeholder="e.g. F. Scott Fitzgerald" />
+            </div>
+            <div class="form-field">
+                <label>ISBN-13 <span style="color:#999;font-weight:400;">(optional)</span></label>
+                <input .value=${this.addBookIsbn}
+                    @input=${(e: Event) => { this.addBookIsbn = (e.target as HTMLInputElement).value; }}
+                    placeholder="13-digit ISBN" maxlength="13" />
+            </div>
+            <div class="form-field">
+                <label>Thumbnail URL <span style="color:#999;font-weight:400;">(optional)</span></label>
+                <input .value=${this.addBookThumbnail}
+                    @input=${(e: Event) => { this.addBookThumbnail = (e.target as HTMLInputElement).value; }}
+                    placeholder="https://..." />
+            </div>
+            <div class="form-field">
+                <label>Published Year <span style="color:#999;font-weight:400;">(optional)</span></label>
+                <input type="number" .value=${this.addBookYear}
+                    @input=${(e: Event) => { this.addBookYear = (e.target as HTMLInputElement).value; }}
+                    placeholder="e.g. 1925" min="1000" max="2100" />
+            </div>
+            ${this.addBookError ? html`<p class="add-book-error">${this.addBookError}</p>` : null}
+            <div class="modal-actions">
+                <button class="btn-cancel" @click=${() => { this.showAddBookForm = false; }}>Cancel</button>
+                <button class="btn-save" ?disabled=${this.addingBook} @click=${this.handleAddBook.bind(this)}>
+                    ${this.addingBook ? 'Adding...' : 'Add Book'}
+                </button>
+            </div>
+        `;
+    }
+
     private openShelfEditor(shelf: UserShelf) {
         this.editingShelf = shelf;
         this.editShelfName = shelf.name;
@@ -494,55 +623,64 @@ export class LibrariesPage extends LitElement {
         return html`
             <div class="overlay" @click=${(e: Event) => { if (e.target === e.currentTarget) this.showShelfEditor = false; }}>
                 <div class="modal">
-                    <h2>Edit Shelf</h2>
+                    <h2>${this.showAddBookForm && this.addBookContext === 'editor' ? 'Add a New Book' : 'Edit Shelf'}</h2>
 
-                    <div class="form-field">
-                        <label>Shelf Name <span style="color:#c0392b">*</span></label>
+                    ${this.showAddBookForm && this.addBookContext === 'editor' ? this.renderAddBookForm() : html`
+                        <div class="form-field">
+                            <label>Shelf Name <span style="color:#c0392b">*</span></label>
+                            <input
+                                .value=${this.editShelfName}
+                                placeholder="e.g. Summer Reads, Must-Reads..."
+                                @input=${(e: Event) => { this.editShelfName = (e.target as HTMLInputElement).value; }}
+                            />
+                        </div>
+
                         <input
-                            .value=${this.editShelfName}
-                            placeholder="e.g. Summer Reads, Must-Reads..."
-                            @input=${(e: Event) => { this.editShelfName = (e.target as HTMLInputElement).value; }}
+                            class="picker-search"
+                            type="text"
+                            placeholder="Search books..."
+                            .value=${this.editShelfSearchQuery}
+                            @input=${(e: Event) => { this.editShelfSearchQuery = (e.target as HTMLInputElement).value; }}
                         />
-                    </div>
 
-                    <input
-                        class="picker-search"
-                        type="text"
-                        placeholder="Search books..."
-                        .value=${this.editShelfSearchQuery}
-                        @input=${(e: Event) => { this.editShelfSearchQuery = (e.target as HTMLInputElement).value; }}
-                    />
+                        <div class="book-picker-list">
+                            ${showFavSection ? html`
+                                <div class="section-label">♥ Your Favorites</div>
+                                ${filteredFavs.slice(0, 50).map(b => bookRow(b, true))}
+                            ` : null}
+                            ${showOtherSection ? html`
+                                ${showFavSection ? html`<div class="section-label">All Books</div>` : null}
+                                ${filteredOthers.slice(0, 50).map(b => bookRow(b, false))}
+                            ` : null}
+                            ${!showFavSection && !showOtherSection ? html`
+                                <div style="padding:16px;text-align:center;">
+                                    <p style="color:#999;margin:0 0 12px;font-size:0.9rem;">
+                                        No books found${q ? html` for "<em>${this.editShelfSearchQuery}</em>"` : ''}.
+                                    </p>
+                                    <button class="btn-add-book" @click=${() => this.openAddBookForm('editor')}>
+                                        + Add Book Manually
+                                    </button>
+                                </div>
+                            ` : null}
+                        </div>
 
-                    <div class="book-picker-list">
-                        ${showFavSection ? html`
-                            <div class="section-label">♥ Your Favorites</div>
-                            ${filteredFavs.slice(0, 50).map(b => bookRow(b, true))}
-                        ` : null}
-                        ${showOtherSection ? html`
-                            ${showFavSection ? html`<div class="section-label">All Books</div>` : null}
-                            ${filteredOthers.slice(0, 50).map(b => bookRow(b, false))}
-                        ` : null}
-                        ${!showFavSection && !showOtherSection
-                            ? html`<div style="padding:16px;color:#999;text-align:center;">No books found.</div>`
-                            : null}
-                    </div>
+                        <div class="selected-count">
+                            ${this.editShelfSelectedIds.size === 0
+                                ? 'No books selected'
+                                : `${this.editShelfSelectedIds.size} book${this.editShelfSelectedIds.size === 1 ? '' : 's'} selected`}
+                        </div>
 
-                    <div class="selected-count">
-                        ${this.editShelfSelectedIds.size === 0
-                            ? 'No books selected'
-                            : `${this.editShelfSelectedIds.size} book${this.editShelfSelectedIds.size === 1 ? '' : 's'} selected`}
-                    </div>
+                        ${this.editShelfError ? html`<p class="shelf-error">${this.editShelfError}</p>` : null}
 
-                    ${this.editShelfError ? html`<p class="shelf-error">${this.editShelfError}</p>` : null}
-
-                    <div class="modal-actions">
-                        <button class="btn-cancel" @click=${() => { this.showShelfEditor = false; }}>Cancel</button>
-                        <button
-                            class="btn-save"
-                            ?disabled=${this.savingShelf}
-                            @click=${this.handleUpdateShelf.bind(this)}
-                        >${this.savingShelf ? 'Saving...' : 'Save Changes'}</button>
-                    </div>
+                        <div class="modal-actions">
+                            <button class="btn-cancel" @click=${() => { this.showShelfEditor = false; }}>Cancel</button>
+                            <button
+                                class="btn-save"
+                                ?disabled=${this.savingShelf}
+                                @click=${this.handleUpdateShelf.bind(this)}
+                            >${this.savingShelf ? 'Saving...' : 'Save Changes'}</button>
+                        </div>
+                    `}
                 </div>
             </div>
         `;
@@ -583,55 +721,64 @@ export class LibrariesPage extends LitElement {
         return html`
             <div class="overlay" @click=${(e: Event) => { if (e.target === e.currentTarget) this.showShelfCreator = false; }}>
                 <div class="modal">
-                    <h2>Create New Shelf</h2>
+                    <h2>${this.showAddBookForm && this.addBookContext === 'creator' ? 'Add a New Book' : 'Create New Shelf'}</h2>
 
-                    <div class="form-field">
-                        <label>Shelf Name <span style="color:#c0392b">*</span></label>
+                    ${this.showAddBookForm && this.addBookContext === 'creator' ? this.renderAddBookForm() : html`
+                        <div class="form-field">
+                            <label>Shelf Name <span style="color:#c0392b">*</span></label>
+                            <input
+                                .value=${this.shelfName}
+                                placeholder="e.g. Summer Reads, Must-Reads..."
+                                @input=${(e: Event) => { this.shelfName = (e.target as HTMLInputElement).value; }}
+                            />
+                        </div>
+
                         <input
-                            .value=${this.shelfName}
-                            placeholder="e.g. Summer Reads, Must-Reads..."
-                            @input=${(e: Event) => { this.shelfName = (e.target as HTMLInputElement).value; }}
+                            class="picker-search"
+                            type="text"
+                            placeholder="Search books to add..."
+                            .value=${this.shelfSearchQuery}
+                            @input=${(e: Event) => { this.shelfSearchQuery = (e.target as HTMLInputElement).value; }}
                         />
-                    </div>
 
-                    <input
-                        class="picker-search"
-                        type="text"
-                        placeholder="Search books to add..."
-                        .value=${this.shelfSearchQuery}
-                        @input=${(e: Event) => { this.shelfSearchQuery = (e.target as HTMLInputElement).value; }}
-                    />
+                        <div class="book-picker-list">
+                            ${showFavSection ? html`
+                                <div class="section-label">♥ Your Favorites</div>
+                                ${filteredFavs.slice(0, 50).map(b => bookRow(b, true))}
+                            ` : null}
+                            ${showOtherSection ? html`
+                                ${showFavSection ? html`<div class="section-label">All Books</div>` : null}
+                                ${filteredOthers.slice(0, 50).map(b => bookRow(b, false))}
+                            ` : null}
+                            ${!showFavSection && !showOtherSection ? html`
+                                <div style="padding:16px;text-align:center;">
+                                    <p style="color:#999;margin:0 0 12px;font-size:0.9rem;">
+                                        No books found${q ? html` for "<em>${this.shelfSearchQuery}</em>"` : ''}.
+                                    </p>
+                                    <button class="btn-add-book" @click=${() => this.openAddBookForm('creator')}>
+                                        + Add Book Manually
+                                    </button>
+                                </div>
+                            ` : null}
+                        </div>
 
-                    <div class="book-picker-list">
-                        ${showFavSection ? html`
-                            <div class="section-label">♥ Your Favorites</div>
-                            ${filteredFavs.slice(0, 50).map(b => bookRow(b, true))}
-                        ` : null}
-                        ${showOtherSection ? html`
-                            ${showFavSection ? html`<div class="section-label">All Books</div>` : null}
-                            ${filteredOthers.slice(0, 50).map(b => bookRow(b, false))}
-                        ` : null}
-                        ${!showFavSection && !showOtherSection
-                            ? html`<div style="padding:16px;color:#999;text-align:center;">No books found.</div>`
-                            : null}
-                    </div>
+                        <div class="selected-count">
+                            ${this.shelfSelectedIds.size === 0
+                                ? 'No books selected yet'
+                                : `${this.shelfSelectedIds.size} book${this.shelfSelectedIds.size === 1 ? '' : 's'} selected`}
+                        </div>
 
-                    <div class="selected-count">
-                        ${this.shelfSelectedIds.size === 0
-                            ? 'No books selected yet'
-                            : `${this.shelfSelectedIds.size} book${this.shelfSelectedIds.size === 1 ? '' : 's'} selected`}
-                    </div>
+                        ${this.shelfError ? html`<p class="shelf-error">${this.shelfError}</p>` : null}
 
-                    ${this.shelfError ? html`<p class="shelf-error">${this.shelfError}</p>` : null}
-
-                    <div class="modal-actions">
-                        <button class="btn-cancel" @click=${() => { this.showShelfCreator = false; }}>Cancel</button>
-                        <button
-                            class="btn-save"
-                            ?disabled=${this.creatingShelf}
-                            @click=${this.handleCreateShelf.bind(this)}
-                        >${this.creatingShelf ? 'Creating...' : 'Create Shelf'}</button>
-                    </div>
+                        <div class="modal-actions">
+                            <button class="btn-cancel" @click=${() => { this.showShelfCreator = false; }}>Cancel</button>
+                            <button
+                                class="btn-save"
+                                ?disabled=${this.creatingShelf}
+                                @click=${this.handleCreateShelf.bind(this)}
+                            >${this.creatingShelf ? 'Creating...' : 'Create Shelf'}</button>
+                        </div>
+                    `}
                 </div>
             </div>
         `;

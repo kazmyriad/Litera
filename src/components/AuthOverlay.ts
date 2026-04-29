@@ -1,7 +1,7 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import './successAnimation.jsx'; 
-import { setCurrentUser, createUser, loginUser } from '../Services.js';
+import { setCurrentUser, createUser, loginUser, checkUniqueField } from '../Services.js';
 
 interface PasswordChecks {
   length: boolean;
@@ -45,6 +45,9 @@ export class AuthOverlay extends LitElement {
 
   @state() private showPasswordChecks = false;
   @state() private showConfirmChecks = false;
+  @state() private usernameError = '';
+  @state() private emailError = '';
+  @state() private submitError = '';
 
   /* ------------------------- Styles ------------------------- */
 
@@ -63,21 +66,27 @@ export class AuthOverlay extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 1rem;
+      box-sizing: border-box;
     }
 
     .panel {
       background: white;
       padding: 1.5rem;
       border-radius: 12px;
-      min-width: 320px;
+      width: min(400px, 90vw);
+      max-height: 90dvh;
+      overflow-y: auto;
+      box-sizing: border-box;
     }
 
     form {
       display: flex;
       flex-direction: column;
       gap: 12px;
-      width: 80vh;
+      width: 100%;
       padding-bottom: 24px;
+      box-sizing: border-box;
     }
 
     input{
@@ -152,6 +161,20 @@ export class AuthOverlay extends LitElement {
       color: #666;
       font-style: italic;
     }
+
+    .field-error {
+      font-size: 10px;
+      color: red;
+      font-style: italic;
+      margin: -6px 0 0 0;
+    }
+
+    .submit-error {
+      font-size: 12px;
+      color: red;
+      text-align: center;
+      margin: 0;
+    }
   `;
 
   /* ------------------------- Helpers ------------------------- */
@@ -190,6 +213,9 @@ export class AuthOverlay extends LitElement {
 
     this.showPasswordChecks = false;
     this.showConfirmChecks = false;
+    this.usernameError = '';
+    this.emailError = '';
+    this.submitError = '';
 
     this.renderRoot.querySelector('form')?.reset();
   }
@@ -206,6 +232,26 @@ export class AuthOverlay extends LitElement {
       number: /[0-9]/.test(value),
       symbol: /[!@#$%&?><]/.test(value),
     };
+  }
+
+  /* ------------------------- Uniqueness checks ------------------------- */
+
+  private async checkUsername() {
+    if (!this.username) return;
+    try {
+      const { conflicts } = await checkUniqueField({ username: this.username });
+      const taken = conflicts.some(c => c.username?.toLowerCase() === this.username.toLowerCase());
+      this.usernameError = taken ? 'Username is already taken' : '';
+    } catch { /* ignore network errors */ }
+  }
+
+  private async checkEmail() {
+    if (!this.email) return;
+    try {
+      const { conflicts } = await checkUniqueField({ email: this.email });
+      const taken = conflicts.some(c => c.email?.toLowerCase() === this.email.toLowerCase());
+      this.emailError = taken ? 'Email is already in use' : '';
+    } catch { /* ignore network errors */ }
   }
 
   /* ------------------------- Login ------------------------- */
@@ -237,6 +283,9 @@ export class AuthOverlay extends LitElement {
 
     if (this.password !== this.confirmPassword) return;
     if (!Object.values(this.passwordChecks).every(Boolean)) return;
+    if (this.usernameError || this.emailError) return;
+
+    this.submitError = '';
 
     try {
       await createUser({
@@ -252,8 +301,18 @@ export class AuthOverlay extends LitElement {
 
       await this.updateComplete;
       (this.renderRoot.querySelector('success-animation') as any)?.play();
-    } catch (err) {
-      console.error('Account creation failed:', err);
+    } catch (err: any) {
+      const msg: string = err?.message ?? '';
+      if (msg.toLowerCase().includes('username')) {
+        this.usernameError = 'Username is already taken';
+      } else if (msg.toLowerCase().includes('email')) {
+        this.emailError = 'Email is already in use';
+      } else if (msg.toLowerCase().includes('already in use')) {
+        this.usernameError = 'Username is already taken';
+        this.emailError = 'Email is already in use';
+      } else {
+        this.submitError = 'Something went wrong. Please try again.';
+      }
     }
   }
 
@@ -304,13 +363,15 @@ export class AuthOverlay extends LitElement {
 
         <label class="required">Email</label>
         <input required
-          @input=${(e: Event) =>
-            this.email = (e.target as HTMLInputElement).value} />
+          @input=${(e: Event) => { this.email = (e.target as HTMLInputElement).value; this.emailError = ''; }}
+          @blur=${() => this.checkEmail()} />
+        ${this.emailError ? html`<p class="field-error">${this.emailError}</p>` : null}
 
         <label class="required">Username</label>
         <input required
-          @input=${(e: Event) =>
-            this.username = (e.target as HTMLInputElement).value} />
+          @input=${(e: Event) => { this.username = (e.target as HTMLInputElement).value; this.usernameError = ''; }}
+          @blur=${() => this.checkUsername()} />
+        ${this.usernameError ? html`<p class="field-error">${this.usernameError}</p>` : null}
 
         <label class="required">Password</label>
         <input
@@ -352,6 +413,7 @@ export class AuthOverlay extends LitElement {
           </p>
         ` : null}
 
+        ${this.submitError ? html`<p class="submit-error">${this.submitError}</p>` : null}
         <button type="submit">Create Account</button>
       </form>
     `;

@@ -188,6 +188,15 @@ export async function createUser(payload: CreateUserPayload) {
   return handleResponse(raw, res);
 }
 
+export async function checkUniqueField(params: { username?: string; email?: string }): Promise<{ unique: boolean; conflicts: { id: number; username: string; email: string }[] }> {
+  const q = new URLSearchParams();
+  if (params.username) q.set('username', params.username);
+  if (params.email) q.set('email', params.email);
+  const res = await fetch(`${API_BASE}/api/users/check-unique?${q}`);
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
 //Library management OOP implementation: Observer
 
 export type Book = {

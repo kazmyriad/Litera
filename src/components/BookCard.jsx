@@ -60,9 +60,15 @@ class BookCard extends LitElement {
                 background-image: linear-gradient(to right, #4a2d5a 48px, #7b5494 50px, transparent 50px);
             }
 
+            .book:hover {
+                background: #4e5538;
+                background-image: linear-gradient(to right, #2e3224 48px, #4e5538 50px, transparent 50px);
+                cursor: pointer;
+            }
+
             .book:hover.favorited {
-                background: #7b5494;
-                background-image: linear-gradient(to right, #4a2d5a 48px, #7b5494 50px, transparent 50px);
+                background: #5e3d72;
+                background-image: linear-gradient(to right, #361f47 48px, #5e3d72 50px, transparent 50px);
             }
 
             .book::after {
@@ -89,7 +95,7 @@ class BookCard extends LitElement {
                 width: 7.5em;
                 overflow: hidden;
                 display: -webkit-box;
-                -webkit-line-clamp: 3;
+                -webkit-line-clamp: 2;
                 -webkit-box-orient: vertical;
                 color: #ece0d5;
                 font-weight: bold;
