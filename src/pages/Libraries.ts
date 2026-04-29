@@ -8,6 +8,7 @@ import {
     getCurrentUser,
     fetchBooks,
     fetchFavorites,
+    fetchPopularBooks,
     addFavorite,
     removeFavorite,
     fetchCommunityCurrentReads,
@@ -21,6 +22,7 @@ import {
 @customElement('libraries-page')
 export class LibrariesPage extends LitElement {
     @state() private books: BookRecord[] = [];
+    @state() private popularBooks: BookRecord[] = [];
     @state() private favoriteIds: Set<number> = new Set();
     @state() private communityReads: CommunityRead[] = [];
     @state() private userShelves: UserShelf[] = [];
@@ -295,18 +297,25 @@ export class LibrariesPage extends LitElement {
 
     private async loadAll() {
         try {
-            this.books = await fetchBooks();
             const user = getCurrentUser();
+            const baseLoads: Promise<void>[] = [
+                fetchBooks().then(b => { this.books = b; }),
+                fetchPopularBooks().then(p => { this.popularBooks = p; }),
+            ];
             if (user) {
-                const [ids, communityReads, userShelves] = await Promise.all([
-                    fetchFavorites(user.id),
-                    fetchCommunityCurrentReads(user.id),
-                    fetchUserShelves(user.id),
-                ]);
-                this.favoriteIds = new Set(ids);
-                this.communityReads = communityReads;
-                this.userShelves = userShelves;
+                baseLoads.push(
+                    Promise.all([
+                        fetchFavorites(user.id),
+                        fetchCommunityCurrentReads(user.id),
+                        fetchUserShelves(user.id),
+                    ]).then(([ids, communityReads, userShelves]) => {
+                        this.favoriteIds = new Set(ids);
+                        this.communityReads = communityReads;
+                        this.userShelves = userShelves;
+                    })
+                );
             }
+            await Promise.all(baseLoads);
         } catch (e) {
             console.error('Failed to load library data', e);
         } finally {
@@ -493,8 +502,9 @@ export class LibrariesPage extends LitElement {
     render(): TemplateResult {
         const user = getCurrentUser();
         const isAuthenticated = !!user;
+        const isFiltering = this.searchQuery.trim() !== '' || this.activeFilters.length > 0;
         const filteredBooks = this.filterAndSortBooks(this.books);
-        const favoriteBooks = this.filterAndSortBooks(this.books.filter(b => this.favoriteIds.has(b.id)));
+        const favoriteBooks = this.books.filter(b => this.favoriteIds.has(b.id));
 
         return html`
             ${this.showShelfCreator ? this.renderShelfCreatorModal() : null}
@@ -510,58 +520,71 @@ export class LibrariesPage extends LitElement {
             </div>
 
             <div class="page-content">
-                <div class="section">
-                    <div class="section-heading">Popular Reads</div>
-                    <community-container>
-                        ${this.loading
-                            ? html`<p>Loading...</p>`
-                            : filteredBooks.length
-                                ? filteredBooks.map(b => this.renderBookCard(b))
-                                : html`<p class="empty-state">No books match your search.</p>`}
-                    </community-container>
-                </div>
-
-                ${isAuthenticated ? html`
+                ${isFiltering ? html`
                     <div class="section">
-                        <div class="section-heading">My Community Reads</div>
+                        <div class="section-heading">Search Results</div>
                         <community-container>
-                            ${this.communityReads.length
-                                ? this.communityReads.map(cr => html`
-                                    <div class="community-read-wrap">
-                                        ${this.renderBookCard(cr.book)}
-                                        <div class="community-read-label">${cr.communityName}</div>
-                                    </div>
-                                  `)
-                                : html`<p class="empty-state">No communities have a current read set yet.</p>`}
+                            ${this.loading
+                                ? html`<p>Loading...</p>`
+                                : filteredBooks.length
+                                    ? filteredBooks.map(b => this.renderBookCard(b))
+                                    : html`<p class="empty-state">No books match your search.</p>`}
+                        </community-container>
+                    </div>
+                ` : html`
+                    <div class="section">
+                        <div class="section-heading">Popular Reads</div>
+                        <community-container>
+                            ${this.loading
+                                ? html`<p>Loading...</p>`
+                                : this.popularBooks.length
+                                    ? this.popularBooks.map(b => this.renderBookCard(b))
+                                    : html`<p class="empty-state">No popular reads yet.</p>`}
                         </community-container>
                     </div>
 
-                    <div class="section">
-                        <div class="section-heading">Favorites</div>
-                        <community-container>
-                            ${favoriteBooks.length
-                                ? favoriteBooks.map(b => this.renderBookCard(b))
-                                : html`<p class="empty-state">No favorites yet — click the heart on any book!</p>`}
-                        </community-container>
-                    </div>
-
-                    ${this.userShelves.map(shelf => html`
+                    ${isAuthenticated ? html`
                         <div class="section">
-                            <div class="section-heading">${shelf.name}</div>
+                            <div class="section-heading">My Community Reads</div>
                             <community-container>
-                                ${shelf.books.length
-                                    ? shelf.books.map(b => this.renderBookCard(b))
-                                    : html`<p class="empty-state">No books on this shelf yet.</p>`}
+                                ${this.communityReads.length
+                                    ? this.communityReads.map(cr => html`
+                                        <div class="community-read-wrap">
+                                            ${this.renderBookCard(cr.book)}
+                                            <div class="community-read-label">${cr.communityName}</div>
+                                        </div>
+                                      `)
+                                    : html`<p class="empty-state">No communities have a current read set yet.</p>`}
                             </community-container>
                         </div>
-                    `)}
 
-                    <div class="section">
-                        <button class="btn-create-shelf" @click=${this.openShelfCreator.bind(this)}>
-                            + Create New Shelf
-                        </button>
-                    </div>
-                ` : null}
+                        <div class="section">
+                            <div class="section-heading">Favorites</div>
+                            <community-container>
+                                ${favoriteBooks.length
+                                    ? favoriteBooks.map(b => this.renderBookCard(b))
+                                    : html`<p class="empty-state">No favorites yet — click the heart on any book!</p>`}
+                            </community-container>
+                        </div>
+
+                        ${this.userShelves.map(shelf => html`
+                            <div class="section">
+                                <div class="section-heading">${shelf.name}</div>
+                                <community-container>
+                                    ${shelf.books.length
+                                        ? shelf.books.map(b => this.renderBookCard(b))
+                                        : html`<p class="empty-state">No books on this shelf yet.</p>`}
+                                </community-container>
+                            </div>
+                        `)}
+
+                        <div class="section">
+                            <button class="btn-create-shelf" @click=${this.openShelfCreator.bind(this)}>
+                                + Create New Shelf
+                            </button>
+                        </div>
+                    ` : null}
+                `}
             </div>
         `;
     }

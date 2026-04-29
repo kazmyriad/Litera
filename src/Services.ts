@@ -265,6 +265,12 @@ export async function fetchBooks(): Promise<BookRecord[]> {
   return handleResponse(raw, res);
 }
 
+export async function fetchPopularBooks(): Promise<BookRecord[]> {
+  const res = await fetch(`${API_BASE}/api/books/popular`);
+  const raw = await res.text();
+  return handleResponse(raw, res) ?? [];
+}
+
 export async function fetchBookById(id: number): Promise<BookRecord> {
   const res = await fetch(`${API_BASE}/api/books/${id}`);
   const raw = await res.text();

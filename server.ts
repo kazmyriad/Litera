@@ -1004,6 +1004,25 @@ app.get('/api/books/:id', async (req, res) => {
   }
 });
 
+// ----------- POPULAR BOOKS ROUTE --------------
+
+app.get('/api/books/popular', async (_req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT b.*, COUNT(uf.book_id) AS favorite_count
+       FROM books b
+       JOIN user_favorites uf ON uf.book_id = b.id
+       GROUP BY b.id
+       ORDER BY favorite_count DESC
+       LIMIT 3`
+    );
+    res.json(rows);
+  } catch (e) {
+    console.error('fetch popular books error', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ----------- FAVORITES ROUTES --------------
 
 app.get('/api/favorites', async (req, res) => {
