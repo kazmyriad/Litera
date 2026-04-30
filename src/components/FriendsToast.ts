@@ -298,8 +298,8 @@ export class FriendsToast extends LitElement {
                                         ${friendIds.has(u.id)
                                             ? html`<span class="tag">Friends</span>`
                                             : this.addedIds.has(u.id)
-                                                ? html`<span class="tag">Request sent</span>`
-                                                : html`<button class="add-btn" title="Add friend" ?disabled=${this.addingId === u.id} @click=${() => this.doAddFriend(u.id)}>+ Add</button>`}
+                                                ? html`<button class="add-btn" disabled>Requested</button>`
+                                                : html`<button class="add-btn" title="Add friend" ?disabled=${this.addingId === u.id} @click=${() => this.doAddFriend(u.id)}>${this.addingId === u.id ? '…' : '+ Add'}</button>`}
                                     </div>
                                 `)
                         }
