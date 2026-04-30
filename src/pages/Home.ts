@@ -90,12 +90,6 @@ export const HomePage = ({ currentPath = '/' }: HomeProps): TemplateResult => {
                     </li>
                 </ul>
             </div>
-            <!--<button @click=${(e: Event) => {
-                const root = (e.currentTarget as HTMLElement).getRootNode() as ShadowRoot;
-                const anim = root.querySelector("#successAnim") as any;
-                anim?.createAnimation();
-            }}>Create Animation</button>-->
-
         </div>
     `;
 };

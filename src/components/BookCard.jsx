@@ -90,7 +90,7 @@ class BookCard extends LitElement {
                 padding: 0;
                 margin-left: 3em;
                 padding-top: 2em;
-                height: 40%;
+                height: 35%;
                 vertical-align: middle;
                 width: 7.5em;
                 overflow: hidden;

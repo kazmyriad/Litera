@@ -15,6 +15,8 @@ class SuccessAnimation extends LitElement {
         inset: 0;
         overflow: hidden;
         background-color: transparent;
+        pointer-events: auto;
+        cursor: pointer;
     }
 
     .disco-wrapper {
@@ -186,9 +188,13 @@ class SuccessAnimation extends LitElement {
     this.renderRoot.querySelector("#content").appendChild(wrapper);
     this.renderRoot.querySelector("#content").setAttribute("style", "background-color: hsla(0, 0%, 0%, 0.5);");
 
-    const burstInterval = setInterval(() => {
+    this._burstInterval = setInterval(() => {
         this.spawnBurstLight(this.renderRoot.querySelector("#content"));
     }, 120);
+
+    this._animTimeout = setTimeout(() => this._finish(wrapper), 3000);
+
+    this.renderRoot.querySelector("#content").addEventListener("click", () => this._stopEarly(wrapper), { once: true });
 
     const rows = 10;
     const cols = 30;
@@ -216,19 +222,21 @@ class SuccessAnimation extends LitElement {
         }
     }
 
-    setTimeout(() => {
-        clearInterval(burstInterval);
-        wrapper.remove();
-        this.renderRoot
-            .querySelector("#content")
-            .setAttribute("style", "background-color: transparent");
-
-        this.dispatchEvent(new CustomEvent('finished', {
-            bubbles: true,
-            composed: true
-        }));
-    }, 3000);
   };
+
+  _finish(wrapper) {
+    clearInterval(this._burstInterval);
+    clearTimeout(this._animTimeout);
+    wrapper.remove();
+    this.renderRoot
+        .querySelector("#content")
+        .setAttribute("style", "background-color: transparent");
+    this.dispatchEvent(new CustomEvent('finished', { bubbles: true, composed: true }));
+  }
+
+  _stopEarly(wrapper) {
+    this._finish(wrapper);
+  }
 
   async play() {
     await this.updateComplete;

@@ -191,8 +191,7 @@ export class AuthOverlay extends LitElement {
     if (e.target === e.currentTarget) {
       this.close();
     }
-  } 
-
+  }
 
   private resetForm() {
     this.loginIdentifier = '';

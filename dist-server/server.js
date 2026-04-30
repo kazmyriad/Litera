@@ -158,7 +158,7 @@ app.get('/api/users/search', async (req, res) => {
         return res.status(400).json({ error: 'q is required' });
     try {
         const [rows] = await pool.query(`SELECT id, username, avatar_url FROM users WHERE username LIKE ? AND id != ? LIMIT 10`, [`%${q}%`, exclude]);
-        const users = (Array.isArray(rows) ? rows : []).map(r => ({
+        const users = (Array.isArray(rows) ? rows : []).map((r) => ({
             id: r.id,
             username: r.username,
             avatarUrl: r.avatar_url ?? null,
