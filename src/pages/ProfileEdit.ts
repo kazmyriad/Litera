@@ -2,7 +2,7 @@
 // ---- also where we would likely require having logged in + fetched specific user data
 import { html, css, type TemplateResult } from "lit";
 import { until } from 'lit/directives/until.js';
-import { fetchUserById, updateUserInformation, checkUniqueUsernameEmail, setCurrentUser } from '../Services';
+import { fetchUserById, updateUserInformation, checkUniqueUsernameEmail, setCurrentUser, deleteUser, logout } from '../Services';
 import '../components/CommunityCard.jsx';
 import '../components/CommunityContainer.jsx';
 import '../components/AppAlert';
@@ -150,6 +150,27 @@ export const ProfileEditPage = (_props: ProfileEditProps): TemplateResult => {
       }
     };
 
+    const showDeleteConfirm = () => {
+      const panel = document.getElementById('delete-confirm-panel') as HTMLElement;
+      if (panel) panel.style.display = 'flex';
+    };
+
+    const hideDeleteConfirm = () => {
+      const panel = document.getElementById('delete-confirm-panel') as HTMLElement;
+      if (panel) panel.style.display = 'none';
+    };
+
+    const onDeleteAccount = async () => {
+      try {
+        await deleteUser(user.id);
+        logout();
+        window.location.hash = '/';
+      } catch (err) {
+        hideDeleteConfirm();
+        showAppAlert('Failed to delete account: ' + ((err as Error).message || err), 'error', false);
+      }
+    };
+
     const imagePickerTemplate = until(
         userPromise.then(user => {
             const avatarUrl = user.avatarUrl || user.avatar_url || '';
@@ -256,7 +277,7 @@ export const ProfileEditPage = (_props: ProfileEditProps): TemplateResult => {
         :host{
             display: block;
         }
-        #card {
+        .card {
             margin: 48px;
             border-radius: 8px;
         }
@@ -293,14 +314,14 @@ export const ProfileEditPage = (_props: ProfileEditProps): TemplateResult => {
         image-picker {
             --color-4: #a9bb72;
         }
-        #card button {
+        .card button {
             background: #a9bb72;
             border: none;
             padding: 6px 8px;
             height: fit-content;
             border-radius: 4px;
         }
-        #card button:hover {
+        .card button:hover {
             cursor: pointer;
             opacity: 0.7;
          }
@@ -357,13 +378,88 @@ export const ProfileEditPage = (_props: ProfileEditProps): TemplateResult => {
         .interest-chip:hover {
             opacity: 0.8;
         }
+        .danger-zone {
+            display: flex;
+            justify-content: flex-end;
+            padding: 24px 0 8px;
+        }
+        button.delete-account-btn {
+            background-color: white;
+            border: 2px solid var(--color-6);
+            color: var(--color-6);
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: 0.15s, color 0.15s;
+        }
+        .delete-account-btn:hover {
+            background: var(--color-6);
+            color: white;
+        }
+        .confirm-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .confirm-dialog {
+            background: white;
+            border-radius: 10px;
+            padding: 32px 28px 24px;
+            width: min(420px, 90vw);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .confirm-dialog h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--color-6);
+        }
+        .confirm-dialog p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.5;
+        }
+        .confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .confirm-cancel {
+            background: transparent;
+            border: 1.5px solid #ccc;
+            color: #666;
+            padding: 7px 18px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        .confirm-cancel:hover { background: #f0f0f0; }
+        .confirm-delete {
+            background: var(--color-6);
+            border: none;
+            color: white;
+            padding: 7px 18px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        .confirm-delete:hover { opacity: 0.85; }
     `;
 
     return html`
       <style>${styles}</style>
       <button style="margin: 16px 24px; background: transparent; color: var(--color-5); border: none; font-size: 1rem; cursor: pointer; padding: 6px 0;"
         @click=${() => window.location.hash = '/profile'}>&larr; Back</button>
-      <div id="card">
+      <div class="card">
         <div class="banner">
           <div style="display:flex; flex-direction:column; gap:6px; align-items:center;">
             ${imagePickerTemplate}
@@ -381,8 +477,22 @@ export const ProfileEditPage = (_props: ProfileEditProps): TemplateResult => {
         <div class="lists">
           ${bioTemplate}
           ${interestsTemplate}
+          <div class="danger-zone">
+            <button class="delete-account-btn" @click=${showDeleteConfirm}>Delete Account</button>
+          </div>
         </div>
 
+      </div>
+
+      <div id="delete-confirm-panel" class="confirm-backdrop" style="display:none;">
+        <div class="confirm-dialog">
+          <h3>Delete account?</h3>
+          <p>This is permanent and cannot be undone. Your profile, shelves, and all activity will be removed.</p>
+          <div class="confirm-actions">
+            <button class="confirm-cancel" @click=${hideDeleteConfirm}>Cancel</button>
+            <button class="confirm-delete" @click=${onDeleteAccount}>Delete Account</button>
+          </div>
+        </div>
       </div>
     `;
 };

@@ -74,7 +74,6 @@ export class AuthOverlay extends LitElement {
       background: white;
       padding: 1.5rem;
       border-radius: 12px;
-      width: min(400px, 90vw);
       max-height: 90dvh;
       overflow-y: auto;
       box-sizing: border-box;
@@ -287,7 +286,7 @@ export class AuthOverlay extends LitElement {
     this.submitError = '';
 
     try {
-      await createUser({
+      const result = await createUser({
         firstname: this.firstname,
         lastname: this.lastname,
         dob: this.dob,
@@ -299,7 +298,14 @@ export class AuthOverlay extends LitElement {
       this.showSuccess = true;
 
       await this.updateComplete;
-      (this.renderRoot.querySelector('success-animation') as any)?.play();
+      await (this.renderRoot.querySelector('success-animation') as any)?.play();
+
+      setCurrentUser(result.user);
+
+      this.open = false;
+      this.resetForm();
+
+      window.location.hash = '/profile';
     } catch (err: any) {
       const msg: string = err?.message ?? '';
       if (msg.toLowerCase().includes('username')) {

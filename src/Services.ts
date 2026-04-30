@@ -402,6 +402,19 @@ export async function deleteCommunity(id: number): Promise<{ success: boolean }>
   return handleResponse(raw, res);
 }
 
+export async function deleteUser(id: number): Promise<{ success: boolean }> {
+  const user = getCurrentUser();
+  if (!user) throw new Error('User must be logged in to delete their account');
+
+  const res = await fetch(`${API_BASE}/api/users/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requesting_user_id: user.id }),
+  });
+  const raw = await res.text();
+  return handleResponse(raw, res);
+}
+
 // Favorites
 
 export async function fetchFavorites(userId: number): Promise<number[]> {
