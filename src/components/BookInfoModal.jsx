@@ -87,8 +87,13 @@ class BookInfoModal extends LitElement {
         display: flex;
         align-items: center;
         justify-content: center;
+        text-align: center;
         font-size: 2.5rem;
         color: #a58a64;
+      }
+      .no-cover p {
+        font-size: 0.9rem;
+        padding: 0 6px;
       }
 
       .book-details { flex: 1; min-width: 0; }
@@ -218,7 +223,7 @@ class BookInfoModal extends LitElement {
             <div class="book-cover">
               ${book.thumbnail
                 ? html`<img src="${book.thumbnail}" alt="${book.title}" />`
-                : html`<div class="no-cover">📚</div>`}
+                : html`<div class="no-cover"><p>( ˶°ㅁ°) !! No Cover!</p></div>`}
             </div>
             <div class="book-details">
               <h2 class="book-title">${book.title}</h2>
