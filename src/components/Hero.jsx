@@ -26,11 +26,10 @@ class TitleHero extends LitElement {
         return css`
             :host {
                 display: block;
-                width: 100%;
                 color: white;
                 background-image: linear-gradient(
-                    rgba(0, 0, 0, 0.8),
-                    rgba(0, 0, 0, 0.2)
+                    rgba(115, 6, 77, 0.8),
+                    rgba(67, 72, 51, 0.2)
                 ),
                 url('src/images/heroGradient.svg');
                 background-size: cover;
